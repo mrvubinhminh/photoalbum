@@ -1,0 +1,2539 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thầy Vũ Tiến Lực </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.3/dist/browser/bundle.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Lobster&family=Montserrat:wght@400;700&family=Pacifico&family=Pattaya&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        
+        .drag-active {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+            transform: scale(1.02);
+        }
+        
+        .preview-pattern {
+            background-color: #e2e8f0;
+            background-image: linear-gradient(45deg, #cbd5e1 25%, transparent 25%, transparent 75%, #cbd5e1 75%, #cbd5e1),
+                              linear-gradient(45deg, #cbd5e1 25%, transparent 25%, transparent 75%, #cbd5e1 75%, #cbd5e1);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+        
+        .tab-btn {
+            position: relative;
+        }
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #3b82f6;
+        }
+        
+        /* Canvas interaction styles */
+        #collageCanvas {
+            cursor: grab;
+            max-width: 100%;
+            height: auto;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        #collageCanvas:active {
+            cursor: grabbing;
+        }
+        
+        .frame-option {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .frame-option.selected {
+            border-color: #3b82f6;
+            ring: 2px;
+            ring-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        /* NEW: Presentation Animations */
+        @keyframes floatUp {
+            0% { transform: translateY(110vh) translateX(0) rotate(-5deg); opacity: 0; }
+            10% { opacity: 1; }
+            50% { transform: translateY(0vh) translateX(30px) rotate(5deg); }
+            90% { opacity: 1; }
+            100% { transform: translateY(-120vh) translateX(-30px) rotate(-5deg); opacity: 0; }
+        }
+        
+        .balloon-wrap {
+            position: absolute;
+            bottom: 0;
+            animation: floatUp linear forwards;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+        }
+
+        .balloon-body {
+            position: relative;
+            width: 60px;
+            height: 75px;
+            border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+            /* 3D Glossy effect */
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.25), inset 10px 10px 15px rgba(255,255,255,0.6);
+            transform-origin: bottom center;
+        }
+
+        /* Nút buộc bóng bay */
+        .balloon-body::before {
+            content: "";
+            position: absolute;
+            width: 12px;
+            height: 10px;
+            background: var(--b-color);
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 50% 50% 0 0;
+        }
+
+        /* Dây bóng bay */
+        .balloon-body::after {
+            content: "";
+            position: absolute;
+            width: 2px;
+            height: 90px;
+            background: rgba(255,255,255,0.4);
+            bottom: -96px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* --- HIỆU ỨNG NỔ --- */
+        @keyframes popBurst {
+            0% { transform: scale(0.5); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.8; background: #fff; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        .balloon-pop {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 80px; height: 80px;
+            margin-top: -40px; margin-left: -40px;
+            border-radius: 50%;
+            animation: popBurst 0.3s ease-out forwards;
+            pointer-events: none;
+        }
+
+        /* Hạt vỡ văng ra khi nổ */
+        .pop-particle {
+            position: absolute;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            top: 50%; left: 50%;
+            animation: particleFly 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        @keyframes particleFly {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 20px #fbbf24, 0 0 40px #fbbf24, 0 0 80px #f59e0b; }
+            100% { box-shadow: 0 0 40px #fde047, 0 0 80px #fde047, 0 0 120px #fbbf24; transform: scale(1.02); }
+        }
+        .victory-glow {
+            animation: pulse-glow 1s infinite alternate ease-in-out;
+            border: 8px solid #fde047;
+            border-radius: 12px;
+        }
+        @keyframes lightSweep {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+        .light-sweep::after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 50%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transform: skewX(-20deg);
+            animation: lightSweep 3s infinite linear;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="antialiased h-screen w-screen flex flex-col m-0 p-0 overflow-hidden bg-gray-50 text-gray-800">
+
+    <!-- Header & Tabs Fullscreen -->
+    <header class="bg-white border-b border-gray-200 p-4 flex items-center justify-between z-10 flex-shrink-0 shadow-sm">
+        <div class="flex items-center gap-3 w-1/4">
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <h1 class="text-xl font-extrabold text-gray-900 tracking-tight hidden md:block">Photo Studio Vũ Tiến Lực </h1>
+        </div>
+        
+        <div class="flex gap-2 bg-gray-100 p-1 rounded-lg">
+            <button id="tabOptimizeBtn" class="tab-btn active px-4 py-2 text-sm font-semibold rounded-md bg-white shadow-sm text-blue-600 transition-all flex items-center gap-1">
+                1. Tối Ưu Hóa
+            </button>
+            <button id="tabCollageBtn" class="tab-btn px-4 py-2 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-800 transition-all flex items-center gap-1">
+                2. Ghép Tự Do
+            </button>
+            <button id="tabAlbumBtn" class="tab-btn px-4 py-2 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-800 transition-all flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                3. Ghép Layout
+            </button>
+        </div>
+
+        <!-- Global Actions Moved to Header -->
+        <div id="headerActions" class="flex gap-3 w-1/4 justify-end opacity-0 pointer-events-none transition-opacity duration-300">
+            <!-- NEW: API & Present Buttons -->
+            <button id="apiSettingsBtn" class="p-2.5 text-gray-500 hover:text-blue-600 bg-gray-100 hover:bg-blue-50 rounded-lg transition-colors" title="Cài đặt API AI">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+            <button id="presentBtn" class="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg text-sm font-bold transition-all shadow-md flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                Trình Chiếu
+            </button>
+            <button id="globalResetBtn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+                Tải ảnh khác
+            </button>
+            <button id="globalDownloadBtn" class="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-sm font-bold transition-all shadow-md flex items-center gap-2 transform hover:-translate-y-0.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Tải Về
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex overflow-hidden relative w-full h-full">
+        
+        <!-- Initial Upload View -->
+        <section id="initialUploadView" class="absolute inset-0 z-20 bg-white flex flex-col items-center justify-center p-8 transition-opacity duration-300">
+            <div class="border-3 border-dashed border-blue-300 rounded-3xl p-16 text-center hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer flex flex-col items-center gap-6 max-w-2xl w-full" id="dropZone">
+                <div class="p-5 bg-blue-100 rounded-full shadow-inner">
+                    <svg class="w-16 h-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-3xl font-bold text-gray-800 mb-2">Tải ảnh nền gốc lên</h3>
+                    <p class="text-gray-500 text-lg">Kéo thả file vào đây hoặc nhấp để chọn từ máy</p>
+                </div>
+                <button id="mainBrowseBtn" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors shadow-lg mt-4">
+                    Duyệt Tệp
+                </button>
+                <p class="text-sm text-gray-400 mt-2">Hỗ trợ: JPG, PNG, WebP (Tối đa 10MB)</p>
+                <input type="file" id="mainFileInput" class="hidden" accept="image/jpeg, image/png, image/webp" />
+            </div>
+        </section>
+
+        <!-- Optimizer Workspace -->
+        <div id="optimizerWorkspace" class="hidden w-full h-full overflow-auto p-6 md:p-10 flex-col gap-8 bg-gray-50">
+            <div class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Original -->
+                <div class="flex flex-col gap-3">
+                    <div class="flex justify-between items-center bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
+                        <span class="font-semibold text-gray-700 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-gray-400"></span> Bản Gốc
+                        </span>
+                        <span id="optOriginalSize" class="text-sm bg-gray-100 px-3 py-1 rounded text-gray-600 font-medium">-- KB</span>
+                    </div>
+
+                    <!-- THÊM MỚI: THANH CÔNG CỤ CHỈNH SỬA GỐC -->
+                    <div class="flex gap-2 bg-gray-50 p-2 rounded-xl border border-gray-200">
+                        <button id="btnCrop" class="flex-1 py-1.5 bg-white border border-gray-300 rounded shadow-sm text-[11px] md:text-xs font-semibold hover:bg-gray-100 flex flex-col md:flex-row items-center justify-center gap-1"><span>✂️</span> Cắt Ảnh</button>
+                        <button id="btnBeauty" class="flex-1 py-1.5 bg-white border border-pink-200 rounded shadow-sm text-[11px] md:text-xs font-semibold hover:bg-pink-50 text-pink-600 flex flex-col md:flex-row items-center justify-center gap-1"><span>✨</span> Làm Đẹp</button>
+                        <button id="btnRemoveBg" class="flex-1 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded shadow-sm text-[11px] md:text-xs font-semibold hover:opacity-90 flex flex-col md:flex-row items-center justify-center gap-1"><span>🪄</span> Xóa Nền AI</button>
+                    </div>
+
+                    <div class="preview-pattern rounded-2xl overflow-hidden border border-gray-300 flex items-center justify-center h-[500px] shadow-inner bg-white">
+                        <img id="optOriginalImg" class="max-w-full max-h-full object-contain drop-shadow-md" src="" alt="Gốc">
+                    </div>
+                </div>
+
+                <!-- Optimized -->
+                <div class="flex flex-col gap-3">
+                    <div class="flex justify-between items-center bg-blue-50 px-4 py-3 rounded-xl border border-blue-200 shadow-sm">
+                        <span class="font-semibold text-blue-800 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Đã Tối Ưu
+                        </span>
+                        <div class="flex items-center gap-3">
+                            <span id="optReduction" class="text-sm font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full">-0%</span>
+                            <span id="optNewSize" class="text-sm bg-white px-3 py-1 rounded shadow-sm text-blue-700 font-bold">-- KB</span>
+                        </div>
+                    </div>
+                    <div class="preview-pattern rounded-2xl overflow-hidden border border-gray-300 relative flex items-center justify-center h-[500px] shadow-inner bg-white">
+                        <img id="optResultImg" class="max-w-full max-h-full object-contain drop-shadow-md" src="" alt="Tối ưu">
+                        <div id="optLoading" class="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center hidden">
+                            <svg class="animate-spin h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="max-w-6xl mx-auto w-full bg-white rounded-2xl p-6 border border-gray-200 shadow-sm mt-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="flex flex-col gap-3">
+                        <label class="text-sm font-semibold text-gray-700 flex justify-between">
+                            Chất lượng nén
+                            <span id="optQualityVal" class="text-blue-600 font-bold bg-blue-50 px-2 rounded">80%</span>
+                        </label>
+                        <input type="range" id="optQualitySlider" min="10" max="100" value="80" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <label class="text-sm font-semibold text-gray-700">Định dạng xuất</label>
+                        <select id="optFormat" class="block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 sm:text-sm outline-none">
+                            <option value="image/webp" selected>WebP (Tối ưu cho Web)</option>
+                            <option value="image/jpeg">JPEG (Tiêu chuẩn)</option>
+                            <option value="image/png">PNG (Chất lượng cao)</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <label class="text-sm font-semibold text-gray-700 flex justify-between items-center">
+                            Kích thước
+                            <label class="flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" id="optRatioLock" checked class="rounded text-blue-600 w-3.5 h-3.5">
+                                <span class="text-xs text-gray-500">Giữ tỷ lệ</span>
+                            </label>
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="optWidth" placeholder="W" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" disabled>
+                            <span class="text-gray-400 font-bold">×</span>
+                            <input type="number" id="optHeight" placeholder="H" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" disabled>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collage Workspace Fullscreen -->
+        <div id="collageWorkspace" class="hidden w-full h-full flex flex-row overflow-hidden bg-[#e5e5f7]" style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px;">
+            
+            <!-- Left Sidebar Toolbar -->
+            <div class="w-80 flex-shrink-0 bg-white border-r border-gray-200 p-5 flex flex-col gap-6 overflow-y-auto h-full shadow-[4px_0_24px_rgba(0,0,0,0.05)] z-10 custom-scrollbar">
+                
+                <div>
+                    <button class="w-full py-4 border-2 border-dashed border-blue-400 bg-blue-50 hover:bg-blue-100 rounded-xl flex flex-col items-center justify-center gap-2 transition-colors cursor-pointer text-blue-600" onclick="document.getElementById('overlayFileInput').click()">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        <span class="text-sm font-bold">Thêm Lớp Ảnh Đè</span>
+                    </button>
+                    <input type="file" id="overlayFileInput" class="hidden" accept="image/*" multiple>
+                    
+                    <button id="addTextBtn" class="w-full py-3 mt-3 border-2 border-dashed border-pink-400 bg-pink-50 hover:bg-pink-100 rounded-xl flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer text-pink-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        <span class="text-sm font-bold">Thêm Chữ Nghệ Thuật</span>
+                    </button>
+
+                    <!-- THÊM MỚI: NÚT NHÃN DÁN & CỌ VẼ -->
+                    <div class="grid grid-cols-2 gap-2 mt-3">
+                        <button id="toggleStickerBtn" class="py-2 border-2 border-dashed border-orange-400 bg-orange-50 hover:bg-orange-100 rounded-xl flex flex-col items-center justify-center gap-1 transition-colors text-orange-600">
+                            <span class="text-sm font-bold">⭐ Nhãn Dán</span>
+                        </button>
+                        <button id="toggleBrushBtn" class="py-2 border-2 border-dashed border-purple-400 bg-purple-50 hover:bg-purple-100 rounded-xl flex flex-col items-center justify-center gap-1 transition-colors text-purple-600">
+                            <span class="text-sm font-bold">🖌️ Cọ Vẽ</span>
+                        </button>
+                    </div>
+
+                    <!-- BẢNG ĐIỀU KHIỂN NHÃN DÁN & CỌ VẼ -->
+                    <div id="stickerPanel" class="hidden grid-cols-4 gap-2 mt-2 bg-orange-50 p-3 rounded-lg border border-orange-100 place-items-center">
+                        <!-- Điền bằng JS -->
+                    </div>
+                    
+                    <div id="brushPanel" class="hidden flex-col gap-2 mt-2 bg-purple-50 p-3 rounded-lg border border-purple-100">
+                        <label class="text-[10px] font-bold text-purple-500 flex justify-between">Màu Cọ</label>
+                        <input type="color" id="brushColor" value="#ec4899" class="w-full h-8 rounded cursor-pointer border-0 p-0">
+                        
+                        <label class="text-[10px] font-bold text-purple-500 mt-1">Độ Dày Cọ</label>
+                        <input type="range" id="brushSize" min="2" max="50" value="10" class="w-full accent-purple-600 h-1.5 bg-purple-200 rounded-lg">
+                        <p class="text-[10px] text-gray-500 italic mt-1 leading-tight">Mẹo: Kéo chuột trên Canvas để vẽ. Khi nhả chuột, nét vẽ sẽ tự động hóa thành 1 lớp ảnh độc lập.</p>
+                    </div>
+
+                    <p class="text-[11px] text-gray-400 mt-2 text-center">Kéo thả để di chuyển. Kéo các góc viền để thu phóng.</p>
+                </div>
+
+                <div class="h-px bg-gray-100 w-full"></div>
+
+                <!-- Overlay Controls -->
+                <div id="overlayControls" class="opacity-50 pointer-events-none transition-opacity flex flex-col gap-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Tinh Chỉnh Lớp</h3>
+                        <div class="flex gap-1">
+                            <button id="bringForwardBtn" title="Lên trên" class="p-1.5 bg-gray-50 border border-gray-200 text-gray-600 rounded hover:bg-gray-100"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg></button>
+                            <button id="deleteOverlayBtn" title="Xóa lớp" class="p-1.5 bg-red-50 border border-red-100 text-red-500 rounded hover:bg-red-100"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-medium text-gray-600 flex justify-between">Phóng to <span id="scaleVal" class="text-blue-600">100%</span></label>
+                        <input type="range" id="overlayScale" min="10" max="300" value="100" class="w-full accent-blue-600 h-1.5 bg-gray-200 rounded-lg appearance-none">
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-medium text-gray-600 flex justify-between">Độ mờ <span id="opacityVal" class="text-blue-600">100%</span></label>
+                        <input type="range" id="overlayOpacity" min="10" max="100" value="100" class="w-full accent-blue-600 h-1.5 bg-gray-200 rounded-lg appearance-none">
+                    </div>
+
+                    <div class="flex flex-col gap-1 mt-2">
+                        <label class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Hòa Trộn Màu (Double Exposure)</label>
+                        <select id="overlayBlendMode" class="block w-full px-2 py-1.5 bg-gray-50 border border-gray-300 rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-medium">
+                            <option value="source-over">Bình thường (Normal)</option>
+                            <option value="multiply">Nhân màu (Multiply - Lọc trắng)</option>
+                            <option value="screen">Màn hình (Screen - Lọc đen)</option>
+                            <option value="overlay">Lớp phủ (Overlay)</option>
+                            <option value="darken">Làm tối (Darken)</option>
+                            <option value="lighten">Làm sáng (Lighten)</option>
+                            <option value="color-dodge">Tránh màu (Color Dodge)</option>
+                            <option value="color-burn">Đốt màu (Color Burn)</option>
+                            <option value="hard-light">Ánh sáng gắt (Hard Light)</option>
+                            <option value="soft-light">Ánh sáng dịu (Soft Light)</option>
+                            <option value="difference">Đảo ngược (Difference)</option>
+                            <option value="exclusion">Loại trừ (Exclusion)</option>
+                            <option value="luminosity">Độ sáng (Luminosity)</option>
+                            <option value="color">Màu sắc (Color)</option>
+                        </select>
+                    </div>
+
+                    <div id="textControls" class="hidden flex-col gap-3 mt-2 bg-pink-50 p-3 rounded-lg border border-pink-100">
+                        <h3 class="text-[10px] font-bold text-pink-500 uppercase tracking-wider">Tùy Chỉnh Chữ</h3>
+                        <textarea id="textInput" rows="2" class="w-full px-2 py-1.5 text-sm border border-pink-200 rounded focus:ring-1 focus:ring-pink-500 outline-none resize-none" placeholder="Nhập chữ vào đây..."></textarea>
+                        
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[10px] font-medium text-gray-500">Phông chữ & Màu</label>
+                            <div class="flex gap-2">
+                                <select id="textFont" class="flex-1 text-xs border border-gray-300 rounded px-1 py-1.5 outline-none focus:border-pink-400">
+                                    <option value="Inter">Inter (Cơ bản)</option>
+                                    <option value="'Dancing Script'">Dancing Script (Mềm mại)</option>
+                                    <option value="'Great Vibes'">Great Vibes (Cổ điển)</option>
+                                    <option value="'Lobster'">Lobster (Đậm đà)</option>
+                                    <option value="'Pacifico'">Pacifico (Vui nhộn)</option>
+                                    <option value="'Pattaya'">Pattaya (Thanh lịch)</option>
+                                    <option value="'Playfair Display'">Playfair (Trang trọng)</option>
+                                    <option value="'Montserrat'">Montserrat (Hiện đại)</option>
+                                </select>
+                                <input type="color" id="textColor" value="#ffffff" class="w-8 h-8 rounded cursor-pointer border-0 p-0 shadow-sm">
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 mt-1">
+                            <label class="text-[11px] font-medium text-gray-600 flex items-center gap-1 cursor-pointer"><input type="checkbox" id="textBold" class="accent-pink-500 rounded"> Đậm</label>
+                            <label class="text-[11px] font-medium text-gray-600 flex items-center gap-1 cursor-pointer"><input type="checkbox" id="textItalic" class="accent-pink-500 rounded"> Nghiêng</label>
+                            <label class="text-[11px] font-medium text-gray-600 flex items-center gap-1 cursor-pointer"><input type="checkbox" id="textShadow" checked class="accent-pink-500 rounded"> Bóng</label>
+                        </div>
+                    </div>
+
+                    <div id="imageSpecificControls" class="flex flex-col gap-4">
+                        <div class="h-px bg-gray-200 w-full my-2"></div>
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Ảnh Trong Khung</h3>
+                        
+                        <div class="flex flex-col gap-1">
+                            <label class="text-xs font-medium text-gray-600 flex justify-between">Thu/Phóng <span id="innerScaleVal" class="text-blue-600">100%</span></label>
+                            <input type="range" id="innerScale" min="50" max="300" value="100" class="w-full accent-blue-600 h-1.5 bg-gray-200 rounded-lg appearance-none">
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <div class="flex flex-col gap-1 w-1/2">
+                                <label class="text-[10px] font-medium text-gray-500">Dịch Ngang</label>
+                                <input type="range" id="panX" min="-100" max="100" value="0" class="w-full accent-blue-600 h-1.5 bg-gray-200 rounded-lg appearance-none">
+                            </div>
+                            <div class="flex flex-col gap-1 w-1/2">
+                                <label class="text-[10px] font-medium text-gray-500">Dịch Dọc</label>
+                                <input type="range" id="panY" min="-100" max="100" value="0" class="w-full accent-blue-600 h-1.5 bg-gray-200 rounded-lg appearance-none">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-px bg-gray-100 w-full"></div>
+
+                <!-- Frames Selection Grid -->
+                <div id="frameControls" class="opacity-50 pointer-events-none transition-opacity">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Hiệu Ứng Khung</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        <!-- Standard Frames -->
+                        <div class="frame-option selected border-2 border-transparent p-1 rounded-lg text-center" data-frame="none">
+                            <div class="bg-gray-100 h-10 rounded flex items-center justify-center mb-1"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg></div>
+                            <span class="text-[10px] font-semibold text-gray-600">Không</span>
+                        </div>
+                        <div class="frame-option border-2 border-transparent p-1 rounded-lg text-center" data-frame="polaroid">
+                            <div class="bg-white border-4 border-gray-200 shadow-sm h-10 rounded flex flex-col mb-1"><div class="bg-gray-300 flex-1 m-px"></div><div class="h-2"></div></div>
+                            <span class="text-[10px] font-semibold text-gray-600">Polaroid</span>
+                        </div>
+                        <div class="frame-option border-2 border-transparent p-1 rounded-lg text-center" data-frame="stamp">
+                            <div class="bg-white border border-dashed border-gray-400 h-10 rounded p-px mb-1"><div class="bg-gray-200 h-full w-full"></div></div>
+                            <span class="text-[10px] font-semibold text-gray-600">Tem thư</span>
+                        </div>
+                        
+                        <div class="frame-option border-2 border-transparent p-1 rounded-lg text-center" data-frame="circle">
+                            <div class="bg-blue-50 border-2 border-blue-400 rounded-full h-10 w-10 mx-auto mb-1 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+                            <span class="text-[10px] font-semibold text-blue-600">Tròn Glow</span>
+                        </div>
+                        <div class="frame-option border-2 border-transparent p-1 rounded-lg text-center" data-frame="oval">
+                            <div class="bg-pink-50 border-4 border-double border-pink-400 rounded-[50%] h-10 w-full mx-auto mb-1"></div>
+                            <span class="text-[10px] font-semibold text-pink-600">Bầu dục</span>
+                        </div>
+                        <div class="frame-option border-2 border-transparent p-1 rounded-lg text-center" data-frame="square">
+                            <div class="bg-purple-50 border-2 border-gray-800 h-10 w-10 mx-auto mb-1 shadow-md shadow-gray-400"></div>
+                            <span class="text-[10px] font-semibold text-gray-700">Vuông 3D</span>
+                        </div>
+                        
+                        <div class="frame-option border-2 border-transparent p-1 rounded-lg text-center" data-frame="wreath">
+                            <div class="bg-green-50 border border-green-200 h-10 rounded mb-1 flex items-center justify-center"><svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                            <span class="text-[10px] font-semibold text-green-700">Nguyệt quế</span>
+                        </div>
+
+                        <!-- Special Winner Frames -->
+                        <div class="col-span-3 mt-2"><h3 class="text-[10px] font-bold text-yellow-600 uppercase tracking-wider mb-1">Dành Cho Người Chiến Thắng</h3></div>
+                        
+                        <div class="frame-option border-2 border-transparent p-1 rounded-lg text-center" data-frame="winner-gold">
+                            <div class="bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-700 h-10 w-full mx-auto mb-1 rounded border-2 border-yellow-100 shadow"></div>
+                            <span class="text-[10px] font-semibold text-yellow-700">Vàng Gold</span>
+                        </div>
+                        <div class="frame-option border-2 border-transparent p-1 rounded-lg text-center" data-frame="winner-star">
+                            <div class="bg-gray-800 h-10 w-full mx-auto mb-1 rounded relative flex items-center justify-center border-2 border-yellow-400">
+                               <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            </div>
+                            <span class="text-[10px] font-semibold text-gray-800">Cúp Sao</span>
+                        </div>
+                        <div class="frame-option border-2 border-transparent p-1 rounded-lg text-center" data-frame="winner-ribbon">
+                            <div class="bg-white border-4 border-red-600 h-10 w-full mx-auto mb-1 flex flex-col justify-end">
+                                 <div class="bg-red-500 h-2.5 w-3/4 mx-auto"></div>
+                            </div>
+                            <span class="text-[10px] font-semibold text-red-600">Ruy Băng</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Canvas Area (Fills remaining space) -->
+            <div class="flex-1 relative flex items-center justify-center p-4 h-full overflow-hidden">
+                <canvas id="collageCanvas" class="max-w-full max-h-full object-contain shadow-2xl rounded-sm"></canvas>
+                
+                <div id="canvasGuide" class="absolute pointer-events-none text-center opacity-50 hidden">
+                    <svg class="w-20 h-20 mx-auto mb-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <p class="font-bold text-xl text-gray-600 drop-shadow-md">Tải ảnh phụ từ menu bên trái<br>để bắt đầu xếp chồng</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Album Workspace Fullscreen -->
+        <div id="albumWorkspace" class="hidden w-full h-full flex flex-row overflow-hidden bg-gray-100">
+            <!-- Left Sidebar -->
+            <div class="w-80 flex-shrink-0 bg-white border-r border-gray-200 p-5 flex flex-col gap-5 overflow-y-auto h-full shadow-[4px_0_24px_rgba(0,0,0,0.05)] z-10 custom-scrollbar">
+                
+                <div>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Mẫu Layout</h3>
+                    <div class="grid grid-cols-2 gap-2" id="layoutOptions">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <div class="h-px bg-gray-100 w-full"></div>
+
+                <div>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Cài Đặt Bố Cục</h3>
+                    <div class="flex flex-col gap-4">
+                        <div class="flex flex-col gap-1">
+                            <label class="text-xs font-medium text-gray-600 flex justify-between">Tỉ lệ khung hình</label>
+                            <select id="albumRatio" class="block w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-sm outline-none">
+                                <option value="1">Vuông 1:1</option>
+                                <option value="0.75">Dọc 3:4</option>
+                                <option value="1.333">Ngang 4:3</option>
+                                <option value="1.777">Ngang 16:9</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-xs font-medium text-gray-600 flex justify-between">Khoảng cách <span id="albumGapVal" class="text-blue-600">20px</span></label>
+                            <input type="range" id="albumGap" min="0" max="100" value="20" class="w-full accent-blue-600 h-1.5 bg-gray-200 rounded-lg">
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-xs font-medium text-gray-600 flex justify-between">Bo góc ảnh <span id="albumRadiusVal" class="text-blue-600">10px</span></label>
+                            <input type="range" id="albumRadius" min="0" max="150" value="10" class="w-full accent-blue-600 h-1.5 bg-gray-200 rounded-lg">
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <label class="text-xs font-medium text-gray-600 flex justify-between">Màu nền nền</label>
+                            <input type="color" id="albumBgColor" value="#ffffff" class="w-full h-8 rounded cursor-pointer border-0 p-0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="h-px bg-gray-100 w-full"></div>
+
+                <div id="albumSlotControls" class="opacity-50 pointer-events-none transition-opacity flex flex-col gap-3">
+                     <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Ảnh Đang Chọn</h3>
+                     <div class="flex gap-2">
+                        <button id="albumChangeImgBtn" class="flex-1 py-1.5 bg-blue-50 text-blue-600 rounded text-xs font-bold hover:bg-blue-100">Đổi Ảnh</button>
+                        <button id="albumRemoveImgBtn" class="flex-1 py-1.5 bg-red-50 text-red-600 rounded text-xs font-bold hover:bg-red-100">Xóa</button>
+                     </div>
+                     
+                     <div class="flex flex-col gap-1 mt-2">
+                        <label class="text-[10px] font-medium text-gray-500 flex justify-between">Phóng to <span id="albumZoomVal" class="text-blue-600">100%</span></label>
+                        <input type="range" id="albumZoom" min="50" max="300" value="100" class="w-full accent-blue-600 h-1 bg-gray-200 rounded">
+                    </div>
+                    <p class="text-[10px] text-gray-400 italic">Mẹo: Kéo chuột trực tiếp trên khung ảnh để dịch chuyển ảnh.</p>
+                </div>
+            </div>
+
+            <!-- Right Canvas Area -->
+            <div class="flex-1 relative flex items-center justify-center p-6 h-full overflow-hidden bg-[radial-gradient(#e2e8f0_1px,transparent_1px)]" style="background-size: 20px 20px;">
+                <canvas id="albumCanvas" class="max-w-full max-h-full object-contain shadow-2xl bg-white"></canvas>
+                <input type="file" id="albumSlotFileInput" class="hidden" accept="image/*">
+            </div>
+        </div>
+
+        <!-- THÊM MỚI: MODAL CẮT ẢNH -->
+        <div id="cropModal" class="fixed inset-0 z-50 bg-black/90 hidden flex-col items-center justify-center p-4">
+            <h2 class="text-white text-xl font-bold mb-4 drop-shadow-md">Cắt Ảnh Tối Ưu - Chuẩn Facebook</h2>
+            
+            <div class="flex flex-wrap justify-center gap-2 mb-4">
+                <button class="crop-ratio-btn active px-3 py-1.5 bg-blue-600 text-white rounded text-sm font-medium transition-colors" data-ratio="free">Tự do</button>
+                <button class="crop-ratio-btn px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm font-medium transition-colors" data-ratio="1">Vuông 1:1 (Avatar/Post)</button>
+                <button class="crop-ratio-btn px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm font-medium transition-colors" data-ratio="0.8">Dọc 4:5 (Post Đẹp Nhất)</button>
+                <button class="crop-ratio-btn px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm font-medium transition-colors" data-ratio="1.91">Ngang 1.91:1 (Link/Share)</button>
+                <button class="crop-ratio-btn px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white rounded text-sm font-medium transition-colors" data-ratio="2.7">Ảnh Bìa (851x315)</button>
+            </div>
+
+            <div class="relative w-full max-w-5xl h-[65vh] flex items-center justify-center border border-gray-700 bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
+                <canvas id="cropCanvas" class="max-w-full max-h-full cursor-crosshair touch-none"></canvas>
+            </div>
+            <div class="flex gap-4 mt-6">
+                <button id="cropCancel" class="px-8 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-medium transition-colors">Hủy Bỏ</button>
+                <button id="cropApply" class="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg transition-transform hover:-translate-y-0.5">Áp Dụng Cắt</button>
+            </div>
+            <p class="text-gray-400 text-sm mt-3">Nhấp kéo giữa khung để di chuyển, kéo các góc màu xanh để thay đổi kích thước cắt.</p>
+        </div>
+
+        <!-- THÊM MỚI: MÀN HÌNH LOADING AI -->
+        <div id="globalLoading" class="fixed inset-0 z-[100] bg-white/90 backdrop-blur-sm hidden flex-col items-center justify-center">
+            <svg class="animate-spin h-16 w-16 text-indigo-600 mb-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Trí Tuệ Nhân Tạo Đang Xử Lý...</h2>
+            <p class="text-gray-500 text-center max-w-md">Xin vui lòng đợi. Ở lần sử dụng tính năng Xóa Nền đầu tiên, hệ thống sẽ tự động tải về thư viện AI (khoảng 30MB). Tốc độ phụ thuộc vào mạng của bạn.</p>
+        </div>
+
+        <!-- THÊM MỚI: MODAL CÀI ĐẶT API -->
+        <div id="apiModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex-col items-center justify-center p-4">
+            <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> Cài Đặt AI API</h2>
+                    <button id="closeApiBtn" class="text-gray-400 hover:text-gray-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">Nhập API Key của Gemini hoặc OpenAI để sử dụng các tính năng tạo ảnh/xóa vật thể nâng cao qua Cloud. Key sẽ được lưu an toàn trên trình duyệt của bạn.</p>
+                <input type="password" id="apiKeyInput" placeholder="Nhập API Key tại đây..." class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-4">
+                <button id="saveApiBtn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow transition-colors">Lưu Cài Đặt</button>
+            </div>
+        </div>
+
+        <!-- THÊM MỚI: MODAL CHỌN CHỦ ĐỀ TRÌNH CHIẾU -->
+        <div id="presentModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden flex-col items-center justify-center p-4">
+            <div class="bg-white rounded-3xl w-full max-w-lg p-8 shadow-2xl text-center">
+                <h2 class="text-2xl font-extrabold text-gray-900 mb-2">Bắt Đầu Trình Chiếu 🎉</h2>
+                <p class="text-gray-500 mb-8">Hãy chọn chủ đề cho màn trình diễn kiệt tác của bạn!</p>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="themeBirthday" class="group flex flex-col items-center justify-center p-6 border-2 border-pink-200 bg-pink-50 hover:bg-pink-100 rounded-2xl transition-all hover:scale-105 hover:border-pink-400">
+                        <span class="text-5xl mb-3 group-hover:animate-bounce">🎂</span>
+                        <span class="font-bold text-pink-600 text-lg">Sinh Nhật</span>
+                        <span class="text-xs text-pink-500 mt-1">Bóng bay & Lời chúc</span>
+                    </button>
+                    
+                    <button id="themeVictory" class="group flex flex-col items-center justify-center p-6 border-2 border-yellow-200 bg-yellow-50 hover:bg-yellow-100 rounded-2xl transition-all hover:scale-105 hover:border-yellow-400">
+                        <span class="text-5xl mb-3 group-hover:animate-pulse">🏆</span>
+                        <span class="font-bold text-yellow-600 text-lg">Chiến Thắng</span>
+                        <span class="text-xs text-yellow-600 mt-1">Hào quang rực rỡ</span>
+                    </button>
+                </div>
+                <button id="closePresentModal" class="mt-8 px-6 py-2 text-gray-500 hover:text-gray-800 font-medium">Hủy bỏ</button>
+            </div>
+        </div>
+
+        <!-- THÊM MỚI: GIAO DIỆN FULLSCREEN TRÌNH CHIẾU -->
+        <div id="presentationView" class="fixed inset-0 z-[200] bg-black hidden flex-col items-center justify-center overflow-hidden">
+            <!-- Vùng chứa các phần tử động (Bóng bay, Hào quang) -->
+            <div id="animContainer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+            
+            <!-- Ảnh chính được trình chiếu -->
+            <div class="relative z-10 w-full h-full flex items-center justify-center p-8">
+                <img id="presentationImage" class="max-w-full max-h-full object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-all duration-1000 transform scale-95" src="" alt="Trình chiếu">
+            </div>
+
+            <button id="exitPresentBtn" class="absolute top-6 right-6 z-50 p-3 bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur transition-all" title="Thoát (Esc)">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Global State ---
+            let activeMode = 'optimize'; 
+            let baseImage = null; 
+            let baseFile = null;
+            let layers = []; 
+            let selectedLayerIndex = -1;
+
+            // --- DOM Elements ---
+            const tabOpt = document.getElementById('tabOptimizeBtn');
+            const tabCol = document.getElementById('tabCollageBtn');
+            const tabAlbum = document.getElementById('tabAlbumBtn');
+            const initialView = document.getElementById('initialUploadView');
+            const optWorkspace = document.getElementById('optimizerWorkspace');
+            const colWorkspace = document.getElementById('collageWorkspace');
+            const albumWorkspace = document.getElementById('albumWorkspace');
+            const headerActions = document.getElementById('headerActions');
+            const globalResetBtn = document.getElementById('globalResetBtn');
+            const globalDownloadBtn = document.getElementById('globalDownloadBtn');
+            const dropZone = document.getElementById('dropZone');
+
+            // Initial Upload
+            const mainFileInput = document.getElementById('mainFileInput');
+            const mainBrowseBtn = document.getElementById('mainBrowseBtn');
+
+            // Optimize Elements
+            const optOriginalImg = document.getElementById('optOriginalImg');
+            const optResultImg = document.getElementById('optResultImg');
+            const optQualitySlider = document.getElementById('optQualitySlider');
+            const optFormat = document.getElementById('optFormat');
+            let optDebounceTimer;
+            let baseImgRatio = 1;
+
+            // Collage Elements
+            const canvas = document.getElementById('collageCanvas');
+            const ctx = canvas.getContext('2d');
+            const overlayInput = document.getElementById('overlayFileInput');
+            const canvasGuide = document.getElementById('canvasGuide');
+            
+            // Collage Controls
+            const overlayControls = document.getElementById('overlayControls');
+            const frameControls = document.getElementById('frameControls');
+            const scaleSlider = document.getElementById('overlayScale');
+            const opacitySlider = document.getElementById('overlayOpacity');
+            const blendModeSelect = document.getElementById('overlayBlendMode');
+            
+            const imageSpecificControls = document.getElementById('imageSpecificControls');
+            const innerScaleSlider = document.getElementById('innerScale');
+            const panXSlider = document.getElementById('panX');
+            const panYSlider = document.getElementById('panY');
+
+            const addTextBtn = document.getElementById('addTextBtn');
+            const textControls = document.getElementById('textControls');
+            const textInput = document.getElementById('textInput');
+            const textFont = document.getElementById('textFont');
+            const textColor = document.getElementById('textColor');
+            const textBold = document.getElementById('textBold');
+            const textItalic = document.getElementById('textItalic');
+            const textShadow = document.getElementById('textShadow');
+
+            // NEW ELEMENTS FOR ADVANCED FEATURES
+            const btnCrop = document.getElementById('btnCrop');
+            const btnBeauty = document.getElementById('btnBeauty');
+            const btnRemoveBg = document.getElementById('btnRemoveBg');
+            const cropModal = document.getElementById('cropModal');
+            const cropCanvas = document.getElementById('cropCanvas');
+            const cropCancel = document.getElementById('cropCancel');
+            const cropApply = document.getElementById('cropApply');
+            const globalLoading = document.getElementById('globalLoading');
+
+            const toggleStickerBtn = document.getElementById('toggleStickerBtn');
+            const toggleBrushBtn = document.getElementById('toggleBrushBtn');
+            const stickerPanel = document.getElementById('stickerPanel');
+            const brushPanel = document.getElementById('brushPanel');
+            const brushColorInput = document.getElementById('brushColor');
+            const brushSizeInput = document.getElementById('brushSize');
+
+            // NEW ELEMENTS FOR API & PRESENTATION
+            const apiSettingsBtn = document.getElementById('apiSettingsBtn');
+            const apiModal = document.getElementById('apiModal');
+            const closeApiBtn = document.getElementById('closeApiBtn');
+            const saveApiBtn = document.getElementById('saveApiBtn');
+            const apiKeyInput = document.getElementById('apiKeyInput');
+
+            const presentBtn = document.getElementById('presentBtn');
+            const presentModal = document.getElementById('presentModal');
+            const closePresentModal = document.getElementById('closePresentModal');
+            const themeBirthday = document.getElementById('themeBirthday');
+            const themeVictory = document.getElementById('themeVictory');
+            const presentationView = document.getElementById('presentationView');
+            const presentationImage = document.getElementById('presentationImage');
+            const exitPresentBtn = document.getElementById('exitPresentBtn');
+            const animContainer = document.getElementById('animContainer');
+
+            let currentAudio = null;
+            let animInterval = null;
+
+            const birthdayMusic = [
+                "https://files.catbox.moe/g0htu2.mp3",
+                "https://files.catbox.moe/tv30n5.mp3",
+                "https://files.catbox.moe/fpt34i.mp3",
+                "https://files.catbox.moe/f6o9vc.mp3",
+                "https://files.catbox.moe/f4qmi8.mp3"
+            ];
+            const victoryMusic = [
+                "https://files.catbox.moe/3x0xfg.mp3",
+                "https://files.catbox.moe/s6f67c.mp3",
+                "https://files.catbox.moe/nqfrce.mp3",
+                "https://files.catbox.moe/b46s4f.mp3",
+                "https://files.catbox.moe/3729yc.mp3",
+                "https://files.catbox.moe/jadcfn.mp3"
+            ];
+
+            // Load saved API Key
+            apiKeyInput.value = localStorage.getItem('photoStudioApiKey') || '';
+
+            // --- Advanced State Variables ---
+            let cropBox = {x: 0, y: 0, w: 0, h: 0};
+            let cropStart = null;
+            let cropAction = null;
+            
+            let isDrawingMode = false;
+            let isBrushActive = false;
+            let currentDrawingPath = [];
+
+            const deleteLayerBtn = document.getElementById('deleteOverlayBtn');
+            const bringForwardBtn = document.getElementById('bringForwardBtn');
+            const frameOptions = document.querySelectorAll('.frame-option');
+
+            // Canvas Interaction State (Drag & Resize)
+            let isDragging = false;
+            let isResizing = false;
+            let dragStartX = 0, dragStartY = 0;
+            let resizeStartDist = 0;
+            let resizeStartScale = 1;
+            let resizeCenterX = 0, resizeCenterY = 0;
+
+            // --- Album Elements & State ---
+            const albumCanvas = document.getElementById('albumCanvas');
+            const albumCtx = albumCanvas.getContext('2d');
+            const albumSlotFileInput = document.getElementById('albumSlotFileInput');
+            let albumBaseWidth = 1600;
+            let albumBaseHeight = 1600;
+            let currentAlbumLayoutIndex = 0;
+            let albumSlots = []; 
+            let selectedAlbumSlot = -1;
+            
+            let isAlbumDragging = false;
+            let albumDragStartX = 0, albumDragStartY = 0;
+            let albumInitPanX = 0, albumInitPanY = 0;
+
+            const albumLayoutsData = [
+                { name: '1 Ảnh To', rects: [{x:0, y:0, w:1, h:1}] },
+                { name: '2 Ảnh Dọc', rects: [{x:0, y:0, w:0.5, h:1}, {x:0.5, y:0, w:0.5, h:1}] },
+                { name: '2 Ảnh Ngang', rects: [{x:0, y:0, w:1, h:0.5}, {x:0, y:0.5, w:1, h:0.5}] },
+                { name: '3 Cổ Điển', rects: [{x:0, y:0, w:0.5, h:1}, {x:0.5, y:0, w:0.5, h:0.5}, {x:0.5, y:0.5, w:0.5, h:0.5}] },
+                { name: '3 Lớp Ngang', rects: [{x:0, y:0, w:1, h:0.333}, {x:0, y:0.333, w:1, h:0.334}, {x:0, y:0.667, w:1, h:0.333}] },
+                { name: '4 Cột & Hàng', rects: [{x:0, y:0, w:0.5, h:0.5}, {x:0.5, y:0, w:0.5, h:0.5}, {x:0, y:0.5, w:0.5, h:0.5}, {x:0.5, y:0.5, w:0.5, h:0.5}] },
+                { name: 'Sáng Tạo 1', rects: [{x:0, y:0, w:0.667, h:0.667}, {x:0.667, y:0, w:0.333, h:0.333}, {x:0.667, y:0.333, w:0.333, h:0.334}, {x:0, y:0.667, w:1, h:0.333}] },
+                { name: 'Sáng Tạo 2', rects: [{x:0, y:0, w:0.333, h:1}, {x:0.333, y:0, w:0.334, h:0.5}, {x:0.667, y:0, w:0.333, h:0.5}, {x:0.333, y:0.5, w:0.667, h:0.5}] }
+            ];
+
+            // --- 1. Tab Switching & UI Visibility ---
+            tabOpt.addEventListener('click', () => switchTab('optimize'));
+            tabCol.addEventListener('click', () => switchTab('collage'));
+            tabAlbum.addEventListener('click', () => switchTab('album'));
+
+            function switchTab(mode) {
+                activeMode = mode;
+                
+                const setTabStyle = (tabEl, isActive) => {
+                    if (isActive) {
+                        tabEl.classList.replace('text-gray-500', 'text-blue-600');
+                        tabEl.classList.add('bg-white', 'shadow-sm', 'active');
+                        tabEl.classList.remove('hover:text-gray-800');
+                    } else {
+                        tabEl.classList.replace('text-blue-600', 'text-gray-500');
+                        tabEl.classList.remove('bg-white', 'shadow-sm', 'active');
+                        tabEl.classList.add('hover:text-gray-800');
+                    }
+                };
+
+                setTabStyle(tabOpt, mode === 'optimize');
+                setTabStyle(tabCol, mode === 'collage');
+                setTabStyle(tabAlbum, mode === 'album');
+                
+                updateWorkspaceVisibility();
+            }
+
+            function updateWorkspaceVisibility() {
+                // Special handling for Album mode (doesn't strictly require baseImage initially)
+                if (activeMode === 'album') {
+                    initialView.classList.add('opacity-0', 'pointer-events-none');
+                    optWorkspace.classList.add('hidden');
+                    optWorkspace.classList.remove('flex');
+                    colWorkspace.classList.add('hidden');
+                    colWorkspace.classList.remove('flex');
+                    
+                    albumWorkspace.classList.remove('hidden');
+                    albumWorkspace.classList.add('flex');
+                    
+                    headerActions.classList.remove('opacity-0', 'pointer-events-none');
+                    headerActions.classList.add('opacity-100', 'pointer-events-auto');
+                    
+                    if(albumSlots.length === 0) initAlbumMode();
+                    return;
+                }
+
+                // Hide album if leaving
+                albumWorkspace.classList.add('hidden');
+                albumWorkspace.classList.remove('flex');
+
+                if (!baseImage) {
+                    initialView.classList.remove('opacity-0', 'pointer-events-none');
+                    optWorkspace.classList.add('hidden');
+                    colWorkspace.classList.add('hidden');
+                    headerActions.classList.remove('opacity-100', 'pointer-events-auto');
+                    headerActions.classList.add('opacity-0', 'pointer-events-none');
+                    return;
+                }
+
+                initialView.classList.add('opacity-0', 'pointer-events-none');
+                headerActions.classList.remove('opacity-0', 'pointer-events-none');
+                headerActions.classList.add('opacity-100', 'pointer-events-auto');
+
+                if (activeMode === 'optimize') {
+                    optWorkspace.classList.remove('hidden');
+                    optWorkspace.classList.add('flex');
+                    colWorkspace.classList.add('hidden');
+                    colWorkspace.classList.remove('flex');
+                    runOptimizer();
+                } else if (activeMode === 'collage') {
+                    optWorkspace.classList.add('hidden');
+                    optWorkspace.classList.remove('flex');
+                    colWorkspace.classList.remove('hidden');
+                    colWorkspace.classList.add('flex');
+                    initCollageCanvas();
+                }
+            }
+
+            // --- 2. File Upload Logic ---
+            mainBrowseBtn.addEventListener('click', () => mainFileInput.click());
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+                dropZone.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); });
+            });
+            ['dragenter', 'dragover'].forEach(evt => dropZone.addEventListener(evt, () => dropZone.classList.add('border-blue-500', 'bg-blue-50')));
+            ['dragleave', 'drop'].forEach(evt => dropZone.addEventListener(evt, () => dropZone.classList.remove('border-blue-500', 'bg-blue-50')));
+            
+            dropZone.addEventListener('drop', (e) => { if(e.dataTransfer.files.length) handleBaseFile(e.dataTransfer.files[0]); });
+            mainFileInput.addEventListener('change', (e) => { if(e.target.files.length) handleBaseFile(e.target.files[0]); });
+
+            function handleBaseFile(file) {
+                if (!file.type.match('image.*')) return alert('Vui lòng chọn ảnh hợp lệ.');
+                baseFile = file;
+                document.getElementById('optOriginalSize').textContent = formatBytes(file.size);
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        baseImage = img;
+                        baseImgRatio = img.width / img.height;
+                        
+                        optOriginalImg.src = e.target.result;
+                        document.getElementById('optWidth').value = img.width;
+                        document.getElementById('optHeight').value = img.height;
+                        document.getElementById('optWidth').disabled = false;
+                        document.getElementById('optHeight').disabled = false;
+
+                        layers = [];
+                        selectedLayerIndex = -1;
+                        
+                        setTimeout(updateWorkspaceVisibility, 100);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // --- 3. Optimizer Logic ---
+            const optRatioLock = document.getElementById('optRatioLock');
+            const wInput = document.getElementById('optWidth');
+            const hInput = document.getElementById('optHeight');
+
+            function runOptimizerDebounced() {
+                document.getElementById('optLoading').classList.remove('hidden');
+                clearTimeout(optDebounceTimer);
+                optDebounceTimer = setTimeout(runOptimizer, 300);
+            }
+
+            optQualitySlider.addEventListener('input', (e) => {
+                document.getElementById('optQualityVal').textContent = `${e.target.value}%`;
+                runOptimizerDebounced();
+            });
+            optFormat.addEventListener('change', runOptimizerDebounced);
+            
+            wInput.addEventListener('input', (e) => {
+                if(optRatioLock.checked && e.target.value) hInput.value = Math.round(e.target.value / baseImgRatio);
+                runOptimizerDebounced();
+            });
+            hInput.addEventListener('input', (e) => {
+                if(optRatioLock.checked && e.target.value) wInput.value = Math.round(e.target.value * baseImgRatio);
+                runOptimizerDebounced();
+            });
+
+            function runOptimizer() {
+                if (!baseImage || activeMode !== 'optimize') return;
+                
+                const q = parseInt(optQualitySlider.value) / 100;
+                const mime = optFormat.value;
+                const tw = parseInt(wInput.value) || baseImage.width;
+                const th = parseInt(hInput.value) || baseImage.height;
+
+                const c = document.createElement('canvas');
+                c.width = tw; c.height = th;
+                const ctx2d = c.getContext('2d');
+                if(mime === 'image/jpeg') { ctx2d.fillStyle = '#fff'; ctx2d.fillRect(0,0,tw,th); }
+                ctx2d.drawImage(baseImage, 0, 0, tw, th);
+
+                c.toBlob((blob) => {
+                    if (blob) {
+                        optResultImg.src = URL.createObjectURL(blob);
+                        document.getElementById('optNewSize').textContent = formatBytes(blob.size);
+                        const red = ((baseFile.size - blob.size) / baseFile.size) * 100;
+                        const redEl = document.getElementById('optReduction');
+                        if (red > 0) {
+                            redEl.textContent = `-${red.toFixed(1)}%`;
+                            redEl.className = "text-sm font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full";
+                        } else {
+                            redEl.textContent = `+${Math.abs(red).toFixed(1)}%`;
+                            redEl.className = "text-sm font-bold text-red-600 bg-red-100 px-3 py-1 rounded-full";
+                        }
+                    }
+                    document.getElementById('optLoading').classList.add('hidden');
+                }, mime, q);
+            }
+
+            // --- 4. Collage Logic ---
+            
+            function updateOverlayControls() {
+                if (selectedLayerIndex === -1) {
+                    overlayControls.classList.add('opacity-50', 'pointer-events-none');
+                    frameControls.classList.add('opacity-50', 'pointer-events-none');
+                    if(textControls) textControls.classList.add('hidden');
+                    if(imageSpecificControls) imageSpecificControls.classList.remove('hidden');
+                    return;
+                }
+                
+                overlayControls.classList.remove('opacity-50', 'pointer-events-none');
+                const layer = layers[selectedLayerIndex];
+                
+                scaleSlider.value = layer.scale * 100;
+                document.getElementById('scaleVal').textContent = `${Math.round(layer.scale * 100)}%`;
+                opacitySlider.value = layer.opacity * 100;
+                document.getElementById('opacityVal').textContent = `${Math.round(layer.opacity * 100)}%`;
+                if(blendModeSelect) blendModeSelect.value = layer.blendMode || 'source-over';
+
+                if (layer.type === 'text') {
+                    if(textControls) {
+                        textControls.classList.remove('hidden');
+                        textControls.classList.add('flex');
+                    }
+                    if(imageSpecificControls) imageSpecificControls.classList.add('hidden');
+                    frameControls.classList.add('opacity-50', 'pointer-events-none');
+                    
+                    textInput.value = layer.text;
+                    textFont.value = layer.fontFamily;
+                    textColor.value = layer.color;
+                    textBold.checked = layer.isBold;
+                    textItalic.checked = layer.isItalic;
+                    textShadow.checked = layer.hasShadow;
+                } else {
+                    if(textControls) {
+                        textControls.classList.add('hidden');
+                        textControls.classList.remove('flex');
+                    }
+                    if(imageSpecificControls) imageSpecificControls.classList.remove('hidden');
+                    frameControls.classList.remove('opacity-50', 'pointer-events-none');
+                    
+                    innerScaleSlider.value = layer.innerScale * 100 || 100;
+                    document.getElementById('innerScaleVal').textContent = `${Math.round((layer.innerScale || 1) * 100)}%`;
+                    panXSlider.value = (layer.panX || 0) * 100;
+                    panYSlider.value = (layer.panY || 0) * 100;
+                    
+                    frameOptions.forEach(opt => opt.classList.remove('selected'));
+                    const activeOpt = Array.from(frameOptions).find(o => o.dataset.frame === layer.frameType);
+                    if(activeOpt) activeOpt.classList.add('selected');
+                }
+            }
+
+            // Text Events
+            addTextBtn.addEventListener('click', () => {
+                layers.push({
+                    type: 'text',
+                    text: 'Chữ Nghệ Thuật',
+                    fontFamily: "'Dancing Script'",
+                    fontSize: 100, 
+                    color: '#ffffff',
+                    isBold: false,
+                    isItalic: false,
+                    hasShadow: true,
+                    x: canvas.width / 2 - 150,
+                    y: canvas.height / 2 - 40,
+                    width: 300, 
+                    height: 80, 
+                    scale: 1, opacity: 1,
+                    isSelected: true,
+                    frameType: 'none'
+                });
+                layers.forEach((l, i) => { if(i !== layers.length-1) l.isSelected = false; });
+                selectedLayerIndex = layers.length - 1;
+                
+                canvasGuide.classList.add('hidden');
+                updateOverlayControls();
+                renderCanvas();
+            });
+
+            const updateTextLayer = () => {
+                if(selectedLayerIndex === -1 || layers[selectedLayerIndex].type !== 'text') return;
+                const l = layers[selectedLayerIndex];
+                l.text = textInput.value;
+                l.fontFamily = textFont.value;
+                l.color = textColor.value;
+                l.isBold = textBold.checked;
+                l.isItalic = textItalic.checked;
+                l.hasShadow = textShadow.checked;
+                renderCanvas();
+            };
+
+            textInput.addEventListener('input', updateTextLayer);
+            textFont.addEventListener('change', updateTextLayer);
+            textColor.addEventListener('input', updateTextLayer);
+            textBold.addEventListener('change', updateTextLayer);
+            textItalic.addEventListener('change', updateTextLayer);
+            textShadow.addEventListener('change', updateTextLayer);
+
+            // General Controls
+            scaleSlider.addEventListener('input', (e) => {
+                if(selectedLayerIndex > -1) {
+                    layers[selectedLayerIndex].scale = e.target.value / 100;
+                    document.getElementById('scaleVal').textContent = `${e.target.value}%`;
+                    renderCanvas();
+                }
+            });
+            opacitySlider.addEventListener('input', (e) => {
+                if(selectedLayerIndex > -1) {
+                    layers[selectedLayerIndex].opacity = e.target.value / 100;
+                    document.getElementById('opacityVal').textContent = `${e.target.value}%`;
+                    renderCanvas();
+                }
+            });
+            if(blendModeSelect) {
+                blendModeSelect.addEventListener('change', (e) => {
+                    if(selectedLayerIndex > -1) {
+                        layers[selectedLayerIndex].blendMode = e.target.value;
+                        renderCanvas();
+                    }
+                });
+            }
+            innerScaleSlider.addEventListener('input', (e) => {
+                if(selectedLayerIndex > -1 && layers[selectedLayerIndex].type !== 'text') {
+                    layers[selectedLayerIndex].innerScale = e.target.value / 100;
+                    document.getElementById('innerScaleVal').textContent = `${e.target.value}%`;
+                    renderCanvas();
+                }
+            });
+            panXSlider.addEventListener('input', (e) => {
+                if(selectedLayerIndex > -1 && layers[selectedLayerIndex].type !== 'text') {
+                    layers[selectedLayerIndex].panX = e.target.value / 100;
+                    renderCanvas();
+                }
+            });
+            panYSlider.addEventListener('input', (e) => {
+                if(selectedLayerIndex > -1 && layers[selectedLayerIndex].type !== 'text') {
+                    layers[selectedLayerIndex].panY = e.target.value / 100;
+                    renderCanvas();
+                }
+            });
+
+            deleteLayerBtn.addEventListener('click', () => {
+                if(selectedLayerIndex > -1) {
+                    layers.splice(selectedLayerIndex, 1);
+                    selectedLayerIndex = -1;
+                    updateOverlayControls();
+                    renderCanvas();
+                }
+            });
+
+            bringForwardBtn.addEventListener('click', () => {
+                if(selectedLayerIndex > -1 && selectedLayerIndex < layers.length - 1) {
+                    const l = layers.splice(selectedLayerIndex, 1)[0];
+                    layers.push(l);
+                    selectedLayerIndex = layers.length - 1;
+                    renderCanvas();
+                }
+            });
+
+            frameOptions.forEach(opt => {
+                opt.addEventListener('click', function() {
+                    if (selectedLayerIndex === -1 || layers[selectedLayerIndex].type === 'text') return;
+                    layers[selectedLayerIndex].frameType = this.dataset.frame;
+                    renderCanvas();
+                    updateOverlayControls();
+                });
+            });
+
+            overlayInput.addEventListener('change', (e) => {
+                if(!e.target.files.length) return;
+                Array.from(e.target.files).forEach(file => {
+                    if (!file.type.match('image.*')) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            let w = img.width, h = img.height;
+                            const maxW = canvas.width * 0.4;
+                            if (w > maxW) { h = h * (maxW / w); w = maxW; }
+                            
+                            layers.push({
+                                type: 'image',
+                                image: img,
+                                x: canvas.width/2 - w/2,
+                                y: canvas.height/2 - h/2,
+                                width: w, height: h,
+                                scale: 1, opacity: 1,
+                                innerScale: 1, panX: 0, panY: 0,
+                                frameType: 'none', isSelected: true
+                            });
+                            layers.forEach((l, i) => { if(i !== layers.length-1) l.isSelected = false; });
+                            selectedLayerIndex = layers.length - 1;
+                            
+                            canvasGuide.classList.add('hidden');
+                            updateOverlayControls();
+                            renderCanvas();
+                        };
+                        img.src = ev.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                });
+                overlayInput.value = ''; 
+            });
+
+            function initCollageCanvas() {
+                canvas.width = baseImage.width;
+                canvas.height = baseImage.height;
+                if(layers.length === 0) canvasGuide.classList.remove('hidden');
+                renderCanvas();
+            }
+
+            function renderCanvas() {
+                if (!ctx || !baseImage) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(baseImage, 0, 0, canvas.width, canvas.height);
+
+                layers.forEach((layer, index) => {
+                    ctx.save();
+                    ctx.globalAlpha = layer.opacity;
+                    ctx.globalCompositeOperation = layer.blendMode || 'source-over';
+                    
+                    let drawW, drawH, drawX, drawY, boxX, boxY, boxW, boxH, centerX, centerY;
+                    
+                    if (layer.type === 'text') {
+                        let fontStyle = '';
+                        if (layer.isItalic) fontStyle += 'italic ';
+                        if (layer.isBold) fontStyle += 'bold ';
+                        const fontSize = layer.fontSize * layer.scale;
+                        ctx.font = `${fontStyle}${fontSize}px ${layer.fontFamily}`;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'top';
+                        
+                        const lines = layer.text.split('\n');
+                        let textWidth = 0;
+                        lines.forEach(line => {
+                            const w = ctx.measureText(line).width;
+                            if (w > textWidth) textWidth = w;
+                        });
+                        
+                        const lineHeight = fontSize * 1.2;
+                        const textHeight = lines.length * lineHeight;
+                        
+                        layer.width = textWidth / layer.scale;
+                        layer.height = textHeight / layer.scale;
+                        
+                        drawW = textWidth;
+                        drawH = textHeight;
+                        drawX = layer.x; 
+                        drawY = layer.y;
+                        boxX = drawX - 10; boxY = drawY - 10; boxW = drawW + 20; boxH = drawH + 20;
+                        
+                        if (layer.hasShadow) {
+                            ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                            ctx.shadowBlur = Math.max(4, 8 * layer.scale);
+                            ctx.shadowOffsetX = Math.max(2, 3 * layer.scale);
+                            ctx.shadowOffsetY = Math.max(2, 3 * layer.scale);
+                        }
+                        
+                        ctx.fillStyle = layer.color;
+                        lines.forEach((line, i) => {
+                            ctx.fillText(line, drawX, drawY + (i * lineHeight));
+                        });
+                        
+                        layer._box = { x: boxX, y: boxY, w: boxW, h: boxH };
+                        
+                    } else {
+                        // Image layers
+                        drawW = layer.width * layer.scale;
+                        drawH = layer.height * layer.scale;
+                        drawX = layer.x;
+                        drawY = layer.y;
+                        centerX = drawX + drawW / 2;
+                        centerY = drawY + drawH / 2;
+                        boxX = drawX; boxY = drawY; boxW = drawW; boxH = drawH;
+
+                        if (layer.frameType === 'stamp') {
+                            const pad = drawW * 0.06;
+                            boxX -= pad; boxY -= pad; boxW += pad*2; boxH += pad*2;
+                            ctx.shadowColor = 'rgba(0,0,0,0.2)'; ctx.shadowBlur = Math.max(8, drawW * 0.015);
+                            ctx.fillStyle = '#ffffff'; ctx.fillRect(boxX, boxY, boxW, boxH);
+                            ctx.shadowColor = 'transparent';
+                            
+                            ctx.globalCompositeOperation = 'destination-out';
+                            ctx.fillStyle = '#000';
+                            const hr = pad * 0.3, sp = hr * 4;
+                            for(let i = boxX; i <= boxX + boxW; i += sp) {
+                                ctx.beginPath(); ctx.arc(i, boxY, hr, 0, Math.PI*2); ctx.fill();
+                                ctx.beginPath(); ctx.arc(i, boxY + boxH, hr, 0, Math.PI*2); ctx.fill();
+                            }
+                            for(let i = boxY; i <= boxY + boxH; i += sp) {
+                                ctx.beginPath(); ctx.arc(boxX, i, hr, 0, Math.PI*2); ctx.fill();
+                                ctx.beginPath(); ctx.arc(boxX + boxW, i, hr, 0, Math.PI*2); ctx.fill();
+                            }
+                            ctx.globalCompositeOperation = 'source-over';
+                        }
+                        else if (layer.frameType === 'circle') {
+                            const radius = Math.min(drawW, drawH) / 2;
+                            ctx.beginPath(); ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                            ctx.shadowColor = '#3b82f6'; ctx.shadowBlur = Math.max(20, drawW * 0.08);
+                            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(4, drawW * 0.02); ctx.stroke();
+                            ctx.shadowColor = 'transparent'; 
+                            ctx.clip();
+                        }
+                        else if (layer.frameType === 'oval') {
+                            ctx.beginPath(); ctx.ellipse(centerX, centerY, drawW/2, drawH/2, 0, 0, Math.PI * 2); ctx.clip();
+                        }
+                        else if (layer.frameType === 'square') {
+                            const side = Math.min(drawW, drawH);
+                            boxX = centerX - side/2; boxY = centerY - side/2; boxW = side; boxH = side;
+                            ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = Math.max(15, side * 0.03);
+                            ctx.shadowOffsetX = Math.max(5, side * 0.015); ctx.shadowOffsetY = Math.max(5, side * 0.015);
+                            ctx.beginPath(); ctx.rect(boxX, boxY, boxW, boxH);
+                            ctx.lineWidth = Math.max(6, side * 0.02); ctx.strokeStyle = '#ffffff'; ctx.stroke();
+                            ctx.shadowColor = 'transparent'; ctx.clip();
+                        }
+
+                        // --- DRAW IMAGE ---
+                        ctx.save();
+                        if (!['circle', 'oval', 'square'].includes(layer.frameType)) {
+                            ctx.beginPath();
+                            ctx.rect(drawX, drawY, drawW, drawH);
+                            ctx.clip();
+                        }
+                        const innerScale = layer.innerScale || 1;
+                        const panX = (layer.panX || 0) * drawW;
+                        const panY = (layer.panY || 0) * drawH;
+
+                        const imgW = drawW * innerScale;
+                        const imgH = drawH * innerScale;
+                        const imgX = centerX - imgW/2 + panX;
+                        const imgY = centerY - imgH/2 + panY;
+
+                        ctx.drawImage(layer.image, imgX, imgY, imgW, imgH);
+                        ctx.restore();
+                        
+                        // --- POST-IMAGE RENDER (Borders, Details over image) ---
+                        if (layer.frameType === 'oval') {
+                            ctx.beginPath(); ctx.ellipse(centerX, centerY, drawW/2, drawH/2, 0, 0, Math.PI * 2);
+                            ctx.lineWidth = Math.max(8, drawW * 0.025); ctx.strokeStyle = 'rgba(236, 72, 153, 0.5)'; ctx.stroke();
+                            ctx.lineWidth = Math.max(2, drawW * 0.005); ctx.strokeStyle = '#ffffff'; ctx.stroke();
+                        }
+                        else if (layer.frameType === 'wreath') {
+                            const rx = (drawW/2)*1.15, ry = (drawH/2)*1.15;
+                            boxX = centerX - rx; boxY = centerY - ry; boxW = rx*2; boxH = ry*2; // expand box
+                            ctx.lineWidth = Math.max(3, drawW * 0.01); ctx.strokeStyle = '#d4af37';
+                            for (let angle = 0; angle < Math.PI * 2; angle += 0.15) {
+                                if (angle > Math.PI * 0.4 && angle < Math.PI * 0.6) continue;
+                                const leafX = centerX + Math.cos(angle) * rx, leafY = centerY + Math.sin(angle) * ry;
+                                ctx.save(); ctx.translate(leafX, leafY); ctx.rotate(angle + Math.PI / 4);
+                                ctx.fillStyle = '#fcd34d'; ctx.beginPath();
+                                ctx.ellipse(0, 0, Math.max(8, drawW * 0.025), Math.max(3, drawW * 0.01), 0, 0, Math.PI*2);
+                                ctx.fill(); ctx.stroke(); ctx.restore();
+                            }
+                        }
+                        else if (layer.frameType === 'winner-gold') {
+                            const grad = ctx.createLinearGradient(drawX, drawY, drawX+drawW, drawY+drawH);
+                            grad.addColorStop(0, '#FBBF24'); grad.addColorStop(0.5, '#FEF3C7'); grad.addColorStop(1, '#D97706');
+                            ctx.strokeStyle = grad; ctx.lineWidth = Math.max(12, drawW * 0.05);
+                            ctx.strokeRect(drawX + ctx.lineWidth/2, drawY + ctx.lineWidth/2, drawW - ctx.lineWidth, drawH - ctx.lineWidth);
+                            ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1;
+                            ctx.strokeRect(drawX + ctx.lineWidth*1.1, drawY + ctx.lineWidth*1.1, drawW - ctx.lineWidth*2.2, drawH - ctx.lineWidth*2.2);
+                        }
+                        else if (layer.frameType === 'winner-star') {
+                            ctx.strokeStyle = '#EAB308'; ctx.lineWidth = Math.max(6, drawW * 0.02);
+                            ctx.strokeRect(drawX, drawY, drawW, drawH);
+                            
+                            const starR = Math.max(15, drawW * 0.08);
+                            boxX -= starR; boxY -= starR; boxW += starR*2; boxH += starR*2; // expand box for stars
+                            
+                            ctx.fillStyle = '#FBBF24';
+                            const drawStar = (cx, cy) => {
+                                ctx.save(); ctx.translate(cx, cy); ctx.beginPath();
+                                for(let i=0; i<5; i++) {
+                                    ctx.lineTo(0, -starR); ctx.translate(0, -starR); ctx.rotate(Math.PI*2/10); ctx.translate(0, starR);
+                                    ctx.lineTo(0, -(starR*0.4)); ctx.translate(0, -(starR*0.4)); ctx.rotate(Math.PI*2/10); ctx.translate(0, starR*0.4);
+                                }
+                                ctx.closePath();
+                                ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 4; ctx.fill(); ctx.restore();
+                            };
+                            drawStar(drawX, drawY); drawStar(drawX + drawW, drawY); drawStar(drawX, drawY + drawH); drawStar(drawX + drawW, drawY + drawH);
+                        }
+                        else if (layer.frameType === 'winner-ribbon') {
+                            ctx.strokeStyle = '#DC2626'; ctx.lineWidth = Math.max(8, drawW * 0.03);
+                            ctx.strokeRect(drawX, drawY, drawW, drawH);
+                            
+                            const rh = drawH * 0.18, rw = drawW * 0.95, rx = centerX - rw/2, ry = drawY + drawH - rh * 0.7;
+                            boxH += rh * 0.3; // expand box for ribbon
+                            
+                            ctx.fillStyle = '#EF4444';
+                            ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx + rw, ry);
+                            ctx.lineTo(rx + rw - rh*0.4, ry + rh); ctx.lineTo(rx + rh*0.4, ry + rh); ctx.closePath();
+                            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 6; ctx.fill(); ctx.shadowColor = 'transparent';
+                            
+                            ctx.fillStyle = '#FEF2F2'; ctx.font = `900 ${rh * 0.5}px Arial, sans-serif`;
+                            ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText("WINNER", centerX, ry + rh/2);
+                        }
+
+                        layer._box = { x: boxX, y: boxY, w: boxW, h: boxH };
+                    }
+                    
+                    // --- DRAW SELECTION BOUNDING BOX & HANDLES ---
+                    if (layer.isSelected) {
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'source-over'; // Tránh hòa trộn đường viền chọn
+                        ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = Math.max(2, canvas.width * 0.0015);
+                        ctx.setLineDash([8, 8]); ctx.strokeRect(boxX, boxY, boxW, boxH); ctx.setLineDash([]);
+                        
+                        ctx.fillStyle = '#fff'; ctx.strokeStyle = '#3b82f6';
+                        const p = Math.max(6, canvas.width * 0.004); // Handle size
+                        const drawHandle = (hx, hy) => { ctx.fillRect(hx-p, hy-p, p*2, p*2); ctx.strokeRect(hx-p, hy-p, p*2, p*2); };
+                        drawHandle(boxX, boxY); drawHandle(boxX+boxW, boxY); drawHandle(boxX, boxY+boxH); drawHandle(boxX+boxW, boxY+boxH);
+                        ctx.restore();
+                    }
+
+                    ctx.restore();
+                });
+
+                // --- DRAW ACTIVE BRUSH PATH ---
+                if (isDrawingMode && currentDrawingPath.length > 0) {
+                    ctx.save();
+                    ctx.strokeStyle = brushColorInput.value;
+                    ctx.lineWidth = parseInt(brushSizeInput.value) * (canvas.width / canvas.getBoundingClientRect().width); 
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.beginPath();
+                    ctx.moveTo(currentDrawingPath[0].x, currentDrawingPath[0].y);
+                    for(let i=1; i<currentDrawingPath.length; i++) {
+                        ctx.lineTo(currentDrawingPath[i].x, currentDrawingPath[i].y);
+                    }
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            // --- Canvas Mouse/Touch Interaction (Drag & Resize) ---
+            
+            function getCanvasCoords(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * (canvas.width / rect.width),
+                    y: (clientY - rect.top) * (canvas.height / rect.height),
+                    scaleX: canvas.width / rect.width
+                };
+            }
+
+            function handlePointerDown(e) {
+                const coords = getCanvasCoords(e);
+                const mouseX = coords.x, mouseY = coords.y;
+
+                // Handle Drawing Mode interception
+                if (isDrawingMode) {
+                    isBrushActive = true;
+                    currentDrawingPath = [{x: mouseX, y: mouseY}];
+                    layers.forEach(l => l.isSelected = false);
+                    selectedLayerIndex = -1;
+                    updateOverlayControls();
+                    renderCanvas();
+                    return;
+                }
+
+                const hitRadius = 24 * coords.scaleX; // Responsive hit area for handles
+
+                let clickedLayer = -1;
+                let hitHandle = false;
+
+                // Check layers from top to bottom
+                for (let i = layers.length - 1; i >= 0; i--) {
+                    const l = layers[i];
+                    if (!l._box) continue;
+                    const b = l._box;
+
+                    // 1. Check resize handles (only if layer is currently selected)
+                    if (l.isSelected) {
+                        const corners = [ {x: b.x, y: b.y}, {x: b.x+b.w, y: b.y}, {x: b.x, y: b.y+b.h}, {x: b.x+b.w, y: b.y+b.h} ];
+                        for (let pt of corners) {
+                            if (Math.hypot(mouseX - pt.x, mouseY - pt.y) < hitRadius) {
+                                hitHandle = true;
+                                clickedLayer = i;
+                                break;
+                            }
+                        }
+                        if (hitHandle) break;
+                    }
+
+                    // 2. Check layer body drag
+                    if (mouseX >= b.x && mouseX <= b.x + b.w && mouseY >= b.y && mouseY <= b.y + b.h) {
+                        clickedLayer = i;
+                        break;
+                    }
+                }
+
+                // Update Selection State
+                layers.forEach(l => l.isSelected = false);
+                
+                if (clickedLayer !== -1) {
+                    layers[clickedLayer].isSelected = true;
+                    selectedLayerIndex = clickedLayer;
+                    
+                    if (hitHandle) {
+                        // Init Resize
+                        isResizing = true;
+                        const l = layers[clickedLayer];
+                        resizeCenterX = l.x + l.width/2;
+                        resizeCenterY = l.y + l.height/2;
+                        resizeStartDist = Math.hypot(mouseX - resizeCenterX, mouseY - resizeCenterY);
+                        resizeStartScale = l.scale;
+                    } else {
+                        // Init Drag
+                        isDragging = true;
+                        dragStartX = mouseX - layers[clickedLayer].x;
+                        dragStartY = mouseY - layers[clickedLayer].y;
+                    }
+                    updateOverlayControls();
+                } else {
+                    selectedLayerIndex = -1;
+                    updateOverlayControls();
+                }
+                renderCanvas();
+            }
+
+            function handlePointerMove(e) {
+                const coords = getCanvasCoords(e);
+
+                if (isDrawingMode && isBrushActive) {
+                    currentDrawingPath.push({x: coords.x, y: coords.y});
+                    requestAnimationFrame(renderCanvas); 
+                    return;
+                }
+
+                if (!isDragging && !isResizing) return;
+                if (selectedLayerIndex === -1) return;
+                
+                const l = layers[selectedLayerIndex];
+
+                if (isResizing) {
+                    // Resize logic based on distance from center
+                    const currentDist = Math.hypot(coords.x - resizeCenterX, coords.y - resizeCenterY);
+                    let newScale = resizeStartScale * (currentDist / resizeStartDist);
+                    newScale = Math.max(0.1, Math.min(newScale, 5)); // Limit scale 10% to 500%
+                    
+                    l.scale = newScale;
+                    // Sync UI slider
+                    scaleSlider.value = newScale * 100;
+                    document.getElementById('scaleVal').textContent = `${Math.round(newScale * 100)}%`;
+                } else if (isDragging) {
+                    // Drag logic
+                    l.x = coords.x - dragStartX;
+                    l.y = coords.y - dragStartY;
+                }
+                
+                requestAnimationFrame(renderCanvas);
+            }
+
+            function handlePointerUp() {
+                if (isDrawingMode && isBrushActive) {
+                    isBrushActive = false;
+                    if (currentDrawingPath.length > 1) saveDrawingAsLayer();
+                    return;
+                }
+                isDragging = false;
+                isResizing = false;
+            }
+
+            // Mouse Events
+            canvas.addEventListener('mousedown', handlePointerDown);
+            window.addEventListener('mousemove', handlePointerMove);
+            window.addEventListener('mouseup', handlePointerUp);
+            // Touch Events
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handlePointerDown(e); }, {passive: false});
+            
+            // Unified Window Touch Move
+            window.addEventListener('touchmove', (e) => { 
+                if (isDragging || isResizing || (isDrawingMode && isBrushActive)) { 
+                    e.preventDefault(); handlePointerMove(e); 
+                } else if (cropAction && !cropModal.classList.contains('hidden')) {
+                    e.preventDefault();
+                    const evt = new MouseEvent('mousemove', { clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
+                    window.dispatchEvent(evt);
+                } else if (isAlbumDragging && activeMode === 'album') { 
+                    e.preventDefault(); handleAlbumPointerMove(e); 
+                }
+            }, {passive: false});
+            
+            window.addEventListener('touchend', (e) => {
+                handlePointerUp(); handleAlbumPointerUp();
+                if(cropAction) cropAction = null;
+            });
+
+            // --- 5. Album Logic ---
+            function initAlbumMode() {
+                initAlbumLayoutsUI();
+                selectAlbumLayout(0); // Mặc định chọn layout đầu tiên
+            }
+
+            function initAlbumLayoutsUI() {
+                const container = document.getElementById('layoutOptions');
+                container.innerHTML = '';
+                albumLayoutsData.forEach((layout, idx) => {
+                    const btn = document.createElement('button');
+                    btn.className = `album-layout-btn relative aspect-square bg-white border-2 rounded-lg p-1 transition-all overflow-hidden cursor-pointer ${idx === currentAlbumLayoutIndex ? 'border-blue-600 ring-2 ring-blue-300' : 'border-gray-200 hover:border-blue-300 shadow-sm'}`;
+                    btn.dataset.index = idx;
+                    btn.title = layout.name;
+                    
+                    const inner = document.createElement('div');
+                    inner.className = 'w-full h-full relative bg-gray-100 rounded';
+                    layout.rects.forEach(r => {
+                        const div = document.createElement('div');
+                        div.className = 'absolute bg-gray-400 border-[0.5px] border-white';
+                        div.style.left = `${r.x * 100}%`; div.style.top = `${r.y * 100}%`;
+                        div.style.width = `${r.w * 100}%`; div.style.height = `${r.h * 100}%`;
+                        inner.appendChild(div);
+                    });
+                    btn.appendChild(inner);
+                    btn.onclick = () => selectAlbumLayout(idx);
+                    container.appendChild(btn);
+                });
+            }
+
+            function selectAlbumLayout(idx) {
+                currentAlbumLayoutIndex = idx;
+                
+                // Cập nhật UI nút
+                document.querySelectorAll('.album-layout-btn').forEach(b => {
+                    b.classList.remove('border-blue-600', 'ring-2', 'ring-blue-300');
+                    b.classList.add('border-gray-200');
+                });
+                const activeBtn = document.querySelector(`.album-layout-btn[data-index="${idx}"]`);
+                if(activeBtn) {
+                    activeBtn.classList.add('border-blue-600', 'ring-2', 'ring-blue-300');
+                    activeBtn.classList.remove('border-gray-200');
+                }
+
+                // Cấu trúc lại danh sách Slot dựa trên layout mới, giữ lại ảnh cũ nếu cùng vị trí
+                const layout = albumLayoutsData[idx];
+                const newSlots = layout.rects.map((r, i) => {
+                    return {
+                        rect: r,
+                        image: albumSlots[i] ? albumSlots[i].image : null,
+                        scale: albumSlots[i] ? albumSlots[i].scale : 1,
+                        panX: albumSlots[i] ? albumSlots[i].panX : 0,
+                        panY: albumSlots[i] ? albumSlots[i].panY : 0
+                    };
+                });
+                albumSlots = newSlots;
+                selectedAlbumSlot = -1; 
+                updateAlbumControlsUI();
+                renderAlbum();
+            }
+
+            function drawRoundRect(ctx, x, y, w, h, radius) {
+                if (w < 2 * radius) radius = w / 2;
+                if (h < 2 * radius) radius = h / 2;
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.arcTo(x + w, y, x + w, y + h, radius);
+                ctx.arcTo(x + w, y + h, x, y + h, radius);
+                ctx.arcTo(x, y + h, x, y, radius);
+                ctx.arcTo(x, y, x + w, y, radius);
+                ctx.closePath();
+            }
+
+            function renderAlbum() {
+                if (!albumCtx) return;
+                
+                // Set kích thước canvas
+                const ratio = parseFloat(document.getElementById('albumRatio').value);
+                albumBaseHeight = albumBaseWidth / ratio;
+                albumCanvas.width = albumBaseWidth;
+                albumCanvas.height = albumBaseHeight;
+
+                // Vẽ nền
+                albumCtx.fillStyle = document.getElementById('albumBgColor').value;
+                albumCtx.fillRect(0, 0, albumBaseWidth, albumBaseHeight);
+
+                const g = parseInt(document.getElementById('albumGap').value);
+                const r = parseInt(document.getElementById('albumRadius').value);
+                
+                albumSlots.forEach((slot, idx) => {
+                    // Tính toán ô chứa có trừ khoảng cách gap
+                    let boxX = slot.rect.x * albumBaseWidth + g;
+                    let boxY = slot.rect.y * albumBaseHeight + g;
+                    let boxW = slot.rect.w * albumBaseWidth - g * 2;
+                    let boxH = slot.rect.h * albumBaseHeight - g * 2;
+                    
+                    slot._box = { x: boxX, y: boxY, w: boxW, h: boxH };
+
+                    albumCtx.save();
+                    // Tạo mặt nạ bo góc
+                    drawRoundRect(albumCtx, boxX, boxY, boxW, boxH, r);
+                    albumCtx.clip();
+
+                    if (slot.image) {
+                        // Tính toán bao phủ (Cover) ảnh vào khung
+                        const scale = slot.scale || 1;
+                        const panX = (slot.panX || 0) * boxW;
+                        const panY = (slot.panY || 0) * boxH;
+                        
+                        const img = slot.image;
+                        const slotRatio = boxW / boxH;
+                        const imgRatio = img.width / img.height;
+                        
+                        let drawW, drawH;
+                        if (imgRatio > slotRatio) {
+                            // Ảnh rộng hơn khung -> khớp chiều cao
+                            drawH = boxH; drawW = boxH * imgRatio;
+                        } else {
+                            // Ảnh cao hơn khung -> khớp chiều rộng
+                            drawW = boxW; drawH = boxW / imgRatio;
+                        }
+                        
+                        drawW *= scale; drawH *= scale;
+                        const drawX = boxX + (boxW - drawW)/2 + panX;
+                        const drawY = boxY + (boxH - drawH)/2 + panY;
+                        
+                        albumCtx.drawImage(img, drawX, drawY, drawW, drawH);
+                    } else {
+                        // Vẽ ô trống (Placeholder)
+                        albumCtx.fillStyle = '#f1f5f9';
+                        albumCtx.fill();
+                        albumCtx.fillStyle = '#cbd5e1';
+                        albumCtx.font = "bold 60px sans-serif";
+                        albumCtx.textAlign = 'center'; albumCtx.textBaseline = 'middle';
+                        albumCtx.fillText("+", boxX + boxW/2, boxY + boxH/2);
+                    }
+                    albumCtx.restore();
+                    
+                    // Vẽ viền chọn (Highlight) khi đang thao tác
+                    if (selectedAlbumSlot === idx) {
+                        albumCtx.save();
+                        drawRoundRect(albumCtx, boxX, boxY, boxW, boxH, r);
+                        albumCtx.strokeStyle = '#3b82f6';
+                        albumCtx.lineWidth = Math.max(6, albumBaseWidth * 0.005);
+                        albumCtx.setLineDash([12, 12]);
+                        albumCtx.stroke();
+                        albumCtx.restore();
+                    }
+                });
+            }
+
+            // Lắng nghe sự kiện cài đặt Layout
+            ['albumRatio', 'albumGap', 'albumRadius', 'albumBgColor'].forEach(id => {
+                document.getElementById(id).addEventListener('input', (e) => {
+                    if(id === 'albumGap') document.getElementById('albumGapVal').textContent = `${e.target.value}px`;
+                    if(id === 'albumRadius') document.getElementById('albumRadiusVal').textContent = `${e.target.value}px`;
+                    renderAlbum();
+                });
+            });
+
+            // Lắng nghe sự kiện điều chỉnh ảnh trong khung
+            document.getElementById('albumZoom').addEventListener('input', (e) => {
+                if(selectedAlbumSlot > -1) {
+                    albumSlots[selectedAlbumSlot].scale = e.target.value / 100;
+                    document.getElementById('albumZoomVal').textContent = `${e.target.value}%`;
+                    renderAlbum();
+                }
+            });
+
+            document.getElementById('albumChangeImgBtn').addEventListener('click', () => triggerAlbumFileInput(selectedAlbumSlot));
+            document.getElementById('albumRemoveImgBtn').addEventListener('click', () => {
+                if(selectedAlbumSlot > -1) {
+                    albumSlots[selectedAlbumSlot].image = null;
+                    updateAlbumControlsUI();
+                    renderAlbum();
+                }
+            });
+
+            function updateAlbumControlsUI() {
+                const controls = document.getElementById('albumSlotControls');
+                if (selectedAlbumSlot === -1 || !albumSlots[selectedAlbumSlot].image) {
+                    controls.classList.add('opacity-50', 'pointer-events-none');
+                } else {
+                    controls.classList.remove('opacity-50', 'pointer-events-none');
+                    const slot = albumSlots[selectedAlbumSlot];
+                    document.getElementById('albumZoom').value = (slot.scale || 1) * 100;
+                    document.getElementById('albumZoomVal').textContent = `${Math.round((slot.scale || 1) * 100)}%`;
+                }
+            }
+
+            // Upload file cho Slot cụ thể
+            let pendingAlbumSlot = -1;
+            function triggerAlbumFileInput(slotIndex) {
+                pendingAlbumSlot = slotIndex;
+                albumSlotFileInput.click();
+            }
+
+            albumSlotFileInput.addEventListener('change', (e) => {
+                if(!e.target.files.length || pendingAlbumSlot === -1) return;
+                const file = e.target.files[0];
+                if (!file.type.match('image.*')) return;
+                
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        albumSlots[pendingAlbumSlot].image = img;
+                        albumSlots[pendingAlbumSlot].scale = 1;
+                        albumSlots[pendingAlbumSlot].panX = 0;
+                        albumSlots[pendingAlbumSlot].panY = 0;
+                        updateAlbumControlsUI();
+                        renderAlbum();
+                    };
+                    img.src = ev.target.result;
+                }
+                reader.readAsDataURL(file);
+                albumSlotFileInput.value = ''; // Reset input
+            });
+
+            // --- Tương tác kéo thả chuột trên Album Canvas ---
+            function getAlbumCanvasCoords(e) {
+                const rect = albumCanvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * (albumCanvas.width / rect.width),
+                    y: (clientY - rect.top) * (albumCanvas.height / rect.height)
+                };
+            }
+
+            function handleAlbumPointerDown(e) {
+                if(activeMode !== 'album') return;
+                const coords = getAlbumCanvasCoords(e);
+                
+                let clickedSlot = -1;
+                for (let i = albumSlots.length - 1; i >= 0; i--) {
+                    const b = albumSlots[i]._box;
+                    if (b && coords.x >= b.x && coords.x <= b.x + b.w && coords.y >= b.y && coords.y <= b.y + b.h) {
+                        clickedSlot = i; break;
+                    }
+                }
+
+                if (clickedSlot !== -1) {
+                    selectedAlbumSlot = clickedSlot;
+                    if (!albumSlots[clickedSlot].image) {
+                        // Trống thì mở chọn file luôn
+                        triggerAlbumFileInput(clickedSlot);
+                    } else {
+                        // Có ảnh rồi thì cho phép kéo
+                        isAlbumDragging = true;
+                        albumDragStartX = coords.x;
+                        albumDragStartY = coords.y;
+                        albumInitPanX = albumSlots[clickedSlot].panX || 0;
+                        albumInitPanY = albumSlots[clickedSlot].panY || 0;
+                    }
+                } else {
+                    selectedAlbumSlot = -1; // Click ra ngoài
+                }
+                updateAlbumControlsUI();
+                renderAlbum();
+            }
+
+            function handleAlbumPointerMove(e) {
+                if (!isAlbumDragging || selectedAlbumSlot === -1 || activeMode !== 'album') return;
+                const slot = albumSlots[selectedAlbumSlot];
+                if (!slot.image) return;
+
+                const coords = getAlbumCanvasCoords(e);
+                const dx = coords.x - albumDragStartX;
+                const dy = coords.y - albumDragStartY;
+                
+                // Quy đổi khoảng cách kéo pixel sang tỉ lệ phần trăm
+                slot.panX = albumInitPanX + (dx / slot._box.w);
+                slot.panY = albumInitPanY + (dy / slot._box.h);
+                
+                requestAnimationFrame(renderAlbum);
+            }
+
+            function handleAlbumPointerUp() { isAlbumDragging = false; }
+
+            albumCanvas.addEventListener('mousedown', handleAlbumPointerDown);
+            // Album mouse/touch move and up are handled by global window listeners now
+            albumCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleAlbumPointerDown(e); }, {passive: false});
+
+
+            // --- 6. ADVANCED FEATURES: Brush & Stickers ---
+            const emojis = ['❤️','⭐','🔥','✨','👑','🌸','🦋','🎈','🎉','💡','😎','😜','😍','💯','💧','⚡'];
+            emojis.forEach(emo => {
+                const btn = document.createElement('button');
+                btn.className = 'text-2xl hover:bg-orange-100 p-1.5 rounded transition-transform hover:scale-110';
+                btn.textContent = emo;
+                btn.onclick = () => {
+                    layers.push({
+                        type: 'text', text: emo, fontFamily: 'Inter', fontSize: 120, 
+                        color: '#000000', isBold: false, isItalic: false, hasShadow: false,
+                        x: canvas.width/2 - 60, y: canvas.height/2 - 60, width: 120, height: 120, 
+                        scale: 1, opacity: 1, isSelected: true, frameType: 'none'
+                    });
+                    layers.forEach((l, i) => { if(i !== layers.length-1) l.isSelected = false; });
+                    selectedLayerIndex = layers.length - 1;
+                    isDrawingMode = false; brushPanel.classList.add('hidden');
+                    toggleBrushBtn.classList.replace('bg-purple-100', 'bg-purple-50');
+                    canvasGuide.classList.add('hidden');
+                    updateOverlayControls(); renderCanvas();
+                };
+                stickerPanel.appendChild(btn);
+            });
+
+            toggleStickerBtn.addEventListener('click', () => {
+                stickerPanel.classList.toggle('hidden');
+                if(!stickerPanel.classList.contains('hidden')) {
+                    brushPanel.classList.add('hidden'); isDrawingMode = false;
+                    toggleBrushBtn.classList.replace('bg-purple-100', 'bg-purple-50');
+                }
+            });
+
+            toggleBrushBtn.addEventListener('click', () => {
+                isDrawingMode = !isDrawingMode;
+                brushPanel.classList.toggle('hidden');
+                if(isDrawingMode) {
+                    toggleBrushBtn.classList.replace('bg-purple-50', 'bg-purple-100');
+                    stickerPanel.classList.add('hidden');
+                    layers.forEach(l => l.isSelected = false); selectedLayerIndex = -1;
+                    updateOverlayControls(); renderCanvas();
+                } else {
+                    toggleBrushBtn.classList.replace('bg-purple-100', 'bg-purple-50');
+                }
+            });
+
+            function saveDrawingAsLayer() {
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                currentDrawingPath.forEach(p => {
+                    minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+                    maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
+                });
+                
+                // Scale factor for responsive brush saving
+                const canvasScale = canvas.width / canvas.getBoundingClientRect().width;
+                const bSize = parseInt(brushSizeInput.value) * canvasScale;
+                const pad = bSize * 1.5;
+                const w = maxX - minX + pad*2;
+                const h = maxY - minY + pad*2;
+                
+                if (w < pad*2.5 || h < pad*2.5) { currentDrawingPath = []; return; } // Filter accidental clicks
+
+                const tc = document.createElement('canvas');
+                tc.width = w; tc.height = h;
+                const tctx = tc.getContext('2d');
+                tctx.strokeStyle = brushColorInput.value;
+                tctx.lineWidth = bSize;
+                tctx.lineCap = 'round'; tctx.lineJoin = 'round';
+                
+                tctx.beginPath();
+                tctx.moveTo(currentDrawingPath[0].x - minX + pad, currentDrawingPath[0].y - minY + pad);
+                for(let i=1; i<currentDrawingPath.length; i++) {
+                    tctx.lineTo(currentDrawingPath[i].x - minX + pad, currentDrawingPath[i].y - minY + pad);
+                }
+                tctx.stroke();
+                
+                const img = new Image();
+                img.onload = () => {
+                    layers.push({
+                        type: 'image', image: img,
+                        x: minX - pad, y: minY - pad, width: w, height: h,
+                        scale: 1, opacity: 1, innerScale: 1, panX: 0, panY: 0,
+                        frameType: 'none', isSelected: true
+                    });
+                    layers.forEach((l, i) => { if(i !== layers.length-1) l.isSelected = false; });
+                    selectedLayerIndex = layers.length - 1;
+                    currentDrawingPath = [];
+                    updateOverlayControls(); renderCanvas();
+                };
+                img.src = tc.toDataURL('image/png');
+            }
+
+            // --- 7. ADVANCED FEATURES: Crop, Beauty, Remove BG ---
+            
+            // Beauty (Soft Focus Filter)
+            btnBeauty.addEventListener('click', () => {
+                if(!baseImage) return;
+                const c = document.createElement('canvas');
+                c.width = baseImage.width; c.height = baseImage.height;
+                const ctx = c.getContext('2d');
+                
+                ctx.drawImage(baseImage, 0, 0); // Original layer
+                
+                const c2 = document.createElement('canvas');
+                c2.width = baseImage.width; c2.height = baseImage.height;
+                const ctx2 = c2.getContext('2d');
+                ctx2.filter = 'blur(12px) contrast(1.15)';
+                ctx2.drawImage(baseImage, 0, 0);
+                
+                ctx.globalAlpha = 0.4;
+                ctx.globalCompositeOperation = 'screen';
+                ctx.drawImage(c2, 0, 0); // Overlay blurred for soft glow
+                
+                ctx.globalAlpha = 1.0;
+                ctx.globalCompositeOperation = 'overlay';
+                ctx.fillStyle = 'rgba(255, 200, 210, 0.12)';
+                ctx.fillRect(0, 0, c.width, c.height); // Rosy tint
+
+                const img = new Image();
+                img.onload = () => {
+                    baseImage = img; layers = []; 
+                    updateWorkspaceVisibility();
+                };
+                img.src = c.toDataURL('image/jpeg', 0.95);
+            });
+
+            // AI Background Removal (via imgly)
+            btnRemoveBg.addEventListener('click', async () => {
+                if(!baseImage) return;
+                if(typeof imglyRemoveBackground === 'undefined') {
+                    alert('Thư viện Trí Tuệ Nhân Tạo chưa tải xong. Xin chờ trong giây lát hoặc làm mới trang.'); return;
+                }
+                
+                globalLoading.classList.remove('hidden'); globalLoading.classList.add('flex');
+                
+                try {
+                    const blob = await imglyRemoveBackground(baseImage.src);
+                    const img = new Image();
+                    img.onload = () => {
+                        baseImage = img; baseImgRatio = img.width / img.height;
+                        layers = []; 
+                        updateWorkspaceVisibility();
+                        globalLoading.classList.add('hidden'); globalLoading.classList.remove('flex');
+                    };
+                    img.src = URL.createObjectURL(blob);
+                } catch(err) {
+                    console.error(err);
+                    alert('Lỗi xử lý AI: ' + err.message);
+                    globalLoading.classList.add('hidden'); globalLoading.classList.remove('flex');
+                }
+            });
+
+            // Crop Tool Logic
+            let currentCropRatio = null;
+            const ratioBtns = document.querySelectorAll('.crop-ratio-btn');
+            
+            ratioBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    ratioBtns.forEach(b => {
+                        b.classList.remove('bg-blue-600', 'active');
+                        b.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                    });
+                    e.target.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                    e.target.classList.add('bg-blue-600', 'active');
+                    
+                    const ratioVal = e.target.dataset.ratio;
+                    if(ratioVal === 'free') {
+                        currentCropRatio = null;
+                    } else {
+                        currentCropRatio = parseFloat(ratioVal);
+                        applyCropRatio();
+                    }
+                });
+            });
+
+            function applyCropRatio() {
+                if(!currentCropRatio || !cropCanvas.width) return;
+                let w = cropCanvas.width * 0.8;
+                let h = w / currentCropRatio;
+                
+                if (h > cropCanvas.height * 0.8) {
+                    h = cropCanvas.height * 0.8;
+                    w = h * currentCropRatio;
+                }
+                
+                cropBox.w = w;
+                cropBox.h = h;
+                cropBox.x = (cropCanvas.width - w) / 2;
+                cropBox.y = (cropCanvas.height - h) / 2;
+                renderCrop();
+            }
+
+            btnCrop.addEventListener('click', () => {
+                if(!baseImage) return;
+                cropModal.classList.remove('hidden'); cropModal.classList.add('flex');
+                
+                // Reset UI ratio buttons
+                ratioBtns.forEach(b => {
+                    b.classList.remove('bg-blue-600', 'active');
+                    b.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                    if(b.dataset.ratio === 'free') {
+                        b.classList.add('bg-blue-600', 'active');
+                        b.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                    }
+                });
+                currentCropRatio = null;
+
+                const maxW = cropModal.clientWidth * 0.9;
+                const maxH = cropModal.clientHeight * 0.6;
+                const ratio = baseImage.width / baseImage.height;
+                
+                let cw = maxW, ch = maxW / ratio;
+                if (ch > maxH) { ch = maxH; cw = maxH * ratio; }
+                
+                cropCanvas.width = cw; cropCanvas.height = ch;
+                cropBox = { x: cw*0.1, y: ch*0.1, w: cw*0.8, h: ch*0.8 };
+                renderCrop();
+            });
+
+            cropCancel.addEventListener('click', () => {
+                cropModal.classList.add('hidden'); cropModal.classList.remove('flex');
+            });
+
+            function renderCrop() {
+                const ctx = cropCanvas.getContext('2d');
+                ctx.clearRect(0,0, cropCanvas.width, cropCanvas.height);
+                ctx.drawImage(baseImage, 0, 0, cropCanvas.width, cropCanvas.height);
+                
+                ctx.fillStyle = 'rgba(0,0,0,0.65)'; // Dark overlay
+                ctx.fillRect(0, 0, cropCanvas.width, cropCanvas.height);
+                
+                ctx.clearRect(cropBox.x, cropBox.y, cropBox.w, cropBox.h); // Clear middle
+                // Draw clear image in middle
+                ctx.drawImage(baseImage, 
+                    cropBox.x * (baseImage.width/cropCanvas.width), cropBox.y * (baseImage.height/cropCanvas.height), 
+                    cropBox.w * (baseImage.width/cropCanvas.width), cropBox.h * (baseImage.height/cropCanvas.height),
+                    cropBox.x, cropBox.y, cropBox.w, cropBox.h
+                );
+                
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+                ctx.setLineDash([6, 6]); ctx.strokeRect(cropBox.x, cropBox.y, cropBox.w, cropBox.h); ctx.setLineDash([]);
+                
+                ctx.fillStyle = '#3b82f6'; const s = 14;
+                const drawHandle = (x, y) => ctx.fillRect(x - s/2, y - s/2, s, s);
+                drawHandle(cropBox.x, cropBox.y);
+                drawHandle(cropBox.x + cropBox.w, cropBox.y);
+                drawHandle(cropBox.x, cropBox.y + cropBox.h);
+                drawHandle(cropBox.x + cropBox.w, cropBox.y + cropBox.h);
+            }
+
+            cropCanvas.addEventListener('mousedown', (e) => {
+                const rect = cropCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left, y = e.clientY - rect.top;
+                
+                cropStart = { x, y, bx: cropBox.x, by: cropBox.y, bw: cropBox.w, bh: cropBox.h };
+                const s = 15;
+                const near = (px, py, rx, ry) => Math.hypot(px-rx, py-ry) < s;
+                
+                if (near(x, y, cropBox.x, cropBox.y)) cropAction = 'nw';
+                else if (near(x, y, cropBox.x + cropBox.w, cropBox.y)) cropAction = 'ne';
+                else if (near(x, y, cropBox.x, cropBox.y + cropBox.h)) cropAction = 'sw';
+                else if (near(x, y, cropBox.x + cropBox.w, cropBox.y + cropBox.h)) cropAction = 'se';
+                else if (x > cropBox.x && x < cropBox.x + cropBox.w && y > cropBox.y && y < cropBox.y + cropBox.h) cropAction = 'move';
+                else cropAction = null;
+            });
+
+            // Handled by window.addEventListener('mousemove') which checks for cropAction
+            window.addEventListener('mousemove', (e) => {
+                if (cropAction && !cropModal.classList.contains('hidden')) {
+                    const rect = cropCanvas.getBoundingClientRect();
+                    let x = Math.max(0, Math.min(cropCanvas.width, e.clientX - rect.left));
+                    let y = Math.max(0, Math.min(cropCanvas.height, e.clientY - rect.top));
+                    
+                    if (cropAction === 'move') {
+                        cropBox.x = Math.max(0, Math.min(cropCanvas.width - cropBox.w, cropStart.bx + (x - cropStart.x)));
+                        cropBox.y = Math.max(0, Math.min(cropCanvas.height - cropBox.h, cropStart.by + (y - cropStart.y)));
+                    } else {
+                        if (!currentCropRatio) {
+                            if (cropAction.includes('n')) {
+                                const bottom = cropStart.by + cropStart.bh;
+                                cropBox.y = Math.min(bottom - 30, y); cropBox.h = bottom - cropBox.y;
+                            }
+                            if (cropAction.includes('s')) cropBox.h = Math.max(30, y - cropBox.y);
+                            if (cropAction.includes('w')) {
+                                const right = cropStart.bx + cropStart.bw;
+                                cropBox.x = Math.min(right - 30, x); cropBox.w = right - cropBox.x;
+                            }
+                            if (cropAction.includes('e')) cropBox.w = Math.max(30, x - cropBox.x);
+                        } else {
+                            let newW = cropBox.w;
+                            if (cropAction.includes('e')) newW = x - cropStart.bx;
+                            if (cropAction.includes('w')) newW = (cropStart.bx + cropStart.bw) - x;
+                            
+                            if (cropAction === 'n' || cropAction === 's') {
+                                let newH = cropBox.h;
+                                if (cropAction === 's') newH = y - cropStart.by;
+                                if (cropAction === 'n') newH = (cropStart.by + cropStart.bh) - y;
+                                newW = newH * currentCropRatio;
+                            }
+                            
+                            newW = Math.max(30, newW);
+                            let newH = newW / currentCropRatio;
+                            
+                            if (cropAction.includes('w')) cropBox.x = (cropStart.bx + cropStart.bw) - newW;
+                            if (cropAction.includes('n')) cropBox.y = (cropStart.by + cropStart.bh) - newH;
+                            cropBox.w = newW;
+                            cropBox.h = newH;
+                        }
+                    }
+                    renderCrop();
+                }
+            });
+            
+            cropCanvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if(e.touches.length > 0) {
+                    const rect = cropCanvas.getBoundingClientRect();
+                    e.clientX = e.touches[0].clientX; e.clientY = e.touches[0].clientY;
+                    cropCanvas.dispatchEvent(new MouseEvent('mousedown', e));
+                }
+            }, {passive: false});
+
+            cropApply.addEventListener('click', () => {
+                const scaleX = baseImage.width / cropCanvas.width;
+                const scaleY = baseImage.height / cropCanvas.height;
+                
+                const sx = cropBox.x * scaleX, sy = cropBox.y * scaleY;
+                const sw = cropBox.w * scaleX, sh = cropBox.h * scaleY;
+                
+                const c = document.createElement('canvas');
+                c.width = sw; c.height = sh;
+                c.getContext('2d').drawImage(baseImage, sx, sy, sw, sh, 0, 0, sw, sh);
+                
+                const img = new Image();
+                img.onload = () => {
+                    baseImage = img; baseImgRatio = img.width / img.height;
+                    layers = []; // Reset layers to match new dimension
+                    cropModal.classList.add('hidden'); cropModal.classList.remove('flex');
+                    document.getElementById('optWidth').value = img.width;
+                    document.getElementById('optHeight').value = img.height;
+                    updateWorkspaceVisibility();
+                };
+                img.src = c.toDataURL('image/png');
+            });
+
+            // --- 8. Global Actions ---
+            globalResetBtn.addEventListener('click', () => {
+                baseImage = null; baseFile = null; layers = [];
+                frameOptions.forEach(o => o.classList.remove('border-blue-500', 'bg-blue-50'));
+                
+                // Reset Album state
+                albumSlots = [];
+                selectedAlbumSlot = -1;
+                
+                updateWorkspaceVisibility();
+            });
+
+            // --- 9. TÍNH NĂNG API & TRÌNH CHIẾU ---
+
+            // API Settings Logic
+            apiSettingsBtn.addEventListener('click', () => {
+                apiModal.classList.remove('hidden'); apiModal.classList.add('flex');
+            });
+            const closeApi = () => { apiModal.classList.add('hidden'); apiModal.classList.remove('flex'); };
+            closeApiBtn.addEventListener('click', closeApi);
+            saveApiBtn.addEventListener('click', () => {
+                localStorage.setItem('photoStudioApiKey', apiKeyInput.value);
+                closeApi();
+                // Hiển thị thông báo nhỏ tạm thời
+                const btnOriginalText = saveApiBtn.textContent;
+                saveApiBtn.textContent = 'Đã Lưu Thành Công!';
+                saveApiBtn.classList.replace('bg-blue-600', 'bg-green-600');
+                setTimeout(() => {
+                    saveApiBtn.textContent = btnOriginalText;
+                    saveApiBtn.classList.replace('bg-green-600', 'bg-blue-600');
+                }, 2000);
+            });
+
+            // Trình Chiếu Logic
+            presentBtn.addEventListener('click', () => {
+                if (activeMode !== 'album' && !baseImage) return alert("Vui lòng tải ảnh lên trước khi trình chiếu!");
+                presentModal.classList.remove('hidden'); presentModal.classList.add('flex');
+            });
+            
+            closePresentModal.addEventListener('click', () => {
+                presentModal.classList.add('hidden'); presentModal.classList.remove('flex');
+            });
+
+            function getActiveCanvasDataUrl() {
+                if (activeMode === 'optimize') {
+                    // Cần lấy ảnh hiện tại từ optimize (tạo lại canvas nhanh để xuất)
+                    const c = document.createElement('canvas');
+                    const w = parseInt(document.getElementById('optWidth').value) || baseImage.width;
+                    const h = parseInt(document.getElementById('optHeight').value) || baseImage.height;
+                    c.width = w; c.height = h;
+                    c.getContext('2d').drawImage(baseImage, 0, 0, w, h);
+                    return c.toDataURL('image/jpeg', 0.95);
+                } else if (activeMode === 'collage') {
+                    // Tạm ẩn selection box
+                    const tempSelection = selectedLayerIndex;
+                    layers.forEach(l => l.isSelected = false);
+                    renderCanvas(); 
+                    const dataUrl = canvas.toDataURL('image/png');
+                    if(tempSelection > -1) layers[tempSelection].isSelected = true;
+                    renderCanvas();
+                    return dataUrl;
+                } else if (activeMode === 'album') {
+                    const tempSelection = selectedAlbumSlot;
+                    selectedAlbumSlot = -1;
+                    renderAlbum();
+                    const dataUrl = albumCanvas.toDataURL('image/jpeg', 0.95);
+                    selectedAlbumSlot = tempSelection;
+                    renderAlbum();
+                    return dataUrl;
+                }
+            }
+
+            const startPresentation = async (theme) => {
+                presentModal.classList.add('hidden'); presentModal.classList.remove('flex');
+                
+                // 1. Lấy hình ảnh
+                const imgData = getActiveCanvasDataUrl();
+                presentationImage.src = imgData;
+                
+                // Reset Animations & Styles
+                animContainer.innerHTML = '';
+                presentationImage.className = 'max-w-full max-h-full object-contain transition-all duration-1000 transform scale-95';
+                clearInterval(animInterval);
+                
+                // 2. Setup Fullscreen
+                presentationView.classList.remove('hidden'); presentationView.classList.add('flex');
+                try {
+                    if (presentationView.requestFullscreen) {
+                        await presentationView.requestFullscreen();
+                    }
+                } catch(err) {
+                    console.log("Fullscreen request failed or denied:", err);
+                }
+
+                // 3. Xử lý âm thanh
+                const trackList = theme === 'birthday' ? birthdayMusic : victoryMusic;
+                const randomTrack = trackList[Math.floor(Math.random() * trackList.length)];
+                
+                if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+                currentAudio = new Audio(randomTrack);
+                currentAudio.loop = true;
+                currentAudio.play().catch(e => console.log("Audio play blocked by browser."));
+
+                // 4. Áp dụng hiệu ứng theo chủ đề
+                setTimeout(() => { presentationImage.classList.replace('scale-95', 'scale-100'); }, 100);
+
+                if (theme === 'birthday') {
+                    presentationImage.classList.add('drop-shadow-[0_0_40px_rgba(236,72,153,0.5)]');
+                    
+                    // Tạo bóng bay liên tục, to nhỏ và nổ ngẫu nhiên
+                    const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
+                    
+                    animInterval = setInterval(() => {
+                        const color = colors[Math.floor(Math.random() * colors.length)];
+                        const duration = 6 + Math.random() * 6; // Bay từ 6s - 12s
+                        
+                        // Lớp bọc ngoài lo việc bay lên
+                        const wrap = document.createElement('div');
+                        wrap.className = 'balloon-wrap';
+                        wrap.style.left = Math.random() * 90 + 'vw';
+                        wrap.style.animationDuration = `${duration}s`;
+
+                        // Lớp thu phóng lo việc to nhỏ
+                        const scaleWrap = document.createElement('div');
+                        const scale = 0.4 + Math.random() * 1.4; // Kích thước ngẫu nhiên từ bé xíu (0.4) đến khổng lồ (1.8)
+                        scaleWrap.style.transform = `scale(${scale})`;
+                        scaleWrap.style.position = 'relative';
+
+                        // Thân bóng bay
+                        const body = document.createElement('div');
+                        body.className = 'balloon-body';
+                        body.style.backgroundColor = color;
+                        body.style.setProperty('--b-color', color); // Set màu cho nút buộc
+                        
+                        scaleWrap.appendChild(body);
+                        wrap.appendChild(scaleWrap);
+                        animContainer.appendChild(wrap);
+                        
+                        // LOGIC NỔ NGẪU NHIÊN: ~40% bóng bay sẽ nổ giữa chừng
+                        if (Math.random() < 0.4) {
+                            // Thời gian nổ ngẫu nhiên (ít nhất bay được 2 giây)
+                            const popDelay = (2 + Math.random() * (duration - 4)) * 1000;
+                            
+                            setTimeout(() => {
+                                if(!wrap.parentNode) return;
+                                
+                                // Ẩn thân bóng bay đi
+                                body.style.display = 'none';
+                                
+                                // Tạo vầng sáng nổ
+                                const burst = document.createElement('div');
+                                burst.className = 'balloon-pop';
+                                burst.style.backgroundColor = color; 
+                                scaleWrap.appendChild(burst);
+                                
+                                // Tạo các hạt vụn văng ra (6-8 hạt)
+                                const numParticles = 6 + Math.floor(Math.random() * 3);
+                                for(let i=0; i < numParticles; i++) {
+                                    const p = document.createElement('div');
+                                    p.className = 'pop-particle';
+                                    p.style.backgroundColor = color;
+                                    
+                                    // Tính toán hướng bay ra ngẫu nhiên
+                                    const angle = Math.random() * Math.PI * 2;
+                                    const dist = 50 + Math.random() * 50; // Văng xa 50-100px
+                                    p.style.setProperty('--tx', `${Math.cos(angle)*dist}px`);
+                                    p.style.setProperty('--ty', `${Math.sin(angle)*dist}px`);
+                                    
+                                    scaleWrap.appendChild(p);
+                                }
+                            }, popDelay);
+                        }
+                        
+                        // Dọn dẹp DOM sau khi bay xong
+                        setTimeout(() => { if (wrap.parentNode) wrap.remove(); }, duration * 1000);
+                    }, 600); // Mỗi 0.6s thả 1 bóng
+                    
+                } else if (theme === 'victory') {
+                    // Thêm hào quang và tia sáng chớp
+                    presentationImage.classList.add('victory-glow', 'light-sweep');
+                    
+                    // Tạo các vệt sáng phụ
+                    animInterval = setInterval(() => {
+                        const star = document.createElement('div');
+                        star.style.position = 'absolute';
+                        star.style.left = Math.random() * 100 + 'vw';
+                        star.style.top = Math.random() * 100 + 'vh';
+                        star.style.width = '4px';
+                        star.style.height = '4px';
+                        star.style.backgroundColor = '#fff';
+                        star.style.boxShadow = '0 0 20px 10px rgba(253, 224, 71, 0.8)';
+                        star.style.borderRadius = '50%';
+                        star.style.opacity = '0';
+                        star.style.transition = 'all 1s ease-in-out';
+                        
+                        animContainer.appendChild(star);
+                        
+                        setTimeout(() => {
+                            star.style.opacity = '1';
+                            star.style.transform = 'scale(5) rotate(45deg)';
+                        }, 50);
+                        
+                        setTimeout(() => { if (star.parentNode) star.remove(); }, 1000);
+                    }, 500);
+                }
+            };
+
+            themeBirthday.addEventListener('click', () => startPresentation('birthday'));
+            themeVictory.addEventListener('click', () => startPresentation('victory'));
+
+            const stopPresentation = () => {
+                if(currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
+                clearInterval(animInterval);
+                presentationView.classList.add('hidden'); presentationView.classList.remove('flex');
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(e => console.log(e));
+                }
+            };
+
+            exitPresentBtn.addEventListener('click', stopPresentation);
+            
+            // Xử lý khi người dùng ấn ESC để thoát Fullscreen
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement) stopPresentation();
+            });
+
+
+            globalDownloadBtn.addEventListener('click', () => {
+                // If not in album mode and no base image, abort
+                if (activeMode !== 'album' && !baseImage) return;
+
+                let downloadCanvas, mime, quality, filenamePrefix;
+
+                if (activeMode === 'optimize') {
+                    const q = parseInt(optQualitySlider.value) / 100;
+                    mime = optFormat.value;
+                    const tw = parseInt(wInput.value) || baseImage.width;
+                    const th = parseInt(hInput.value) || baseImage.height;
+
+                    downloadCanvas = document.createElement('canvas');
+                    downloadCanvas.width = tw; downloadCanvas.height = th;
+                    const ctx2d = downloadCanvas.getContext('2d');
+                    if(mime === 'image/jpeg') { ctx2d.fillStyle = '#fff'; ctx2d.fillRect(0,0,tw,th); }
+                    ctx2d.drawImage(baseImage, 0, 0, tw, th);
+                    
+                    quality = q; filenamePrefix = 'optimized';
+                } else if (activeMode === 'collage') {
+                    const tempSelection = selectedLayerIndex;
+                    layers.forEach(l => l.isSelected = false);
+                    renderCanvas(); 
+                    
+                    downloadCanvas = canvas;
+                    mime = baseFile.type === 'image/png' ? 'image/png' : 'image/jpeg';
+                    quality = 1.0; 
+                    filenamePrefix = 'collage';
+                    
+                    if(tempSelection > -1) layers[tempSelection].isSelected = true;
+                    setTimeout(renderCanvas, 100); 
+                } else if (activeMode === 'album') {
+                    // Hide selection box before exporting
+                    const tempSelection = selectedAlbumSlot;
+                    selectedAlbumSlot = -1;
+                    renderAlbum();
+                    
+                    downloadCanvas = albumCanvas;
+                    mime = 'image/jpeg'; // JPEG for solid background album
+                    quality = 1.0;
+                    filenamePrefix = 'album-layout';
+                    
+                    // Restore selection after exporting
+                    setTimeout(() => {
+                        selectedAlbumSlot = tempSelection;
+                        renderAlbum();
+                    }, 100);
+                }
+
+                let ext = 'jpg';
+                if(mime === 'image/png') ext = 'png';
+                if(mime === 'image/webp') ext = 'webp';
+
+                // Handle file name safely
+                let nameWithoutExt = 'photo-studio';
+                if (baseFile && baseFile.name) {
+                    const originalName = baseFile.name;
+                    nameWithoutExt = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
+                }
+                const newFilename = `${nameWithoutExt}-${filenamePrefix}.${ext}`;
+
+                downloadCanvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = newFilename;
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, mime, quality);
+            });
+
+            function formatBytes(bytes, decimals = 2) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024, dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            }
+        });
+    </script>
+</body>
+</html>
