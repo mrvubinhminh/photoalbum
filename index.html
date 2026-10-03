@@ -168,6 +168,19 @@
             animation: lightSweep 3s infinite linear;
             pointer-events: none;
         }
+
+        /* --- HIỆU ỨNG PHÁO SÁNG (FIREWORKS) --- */
+        .firework-particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: fireworkBurst 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+        }
+        @keyframes fireworkBurst {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            80% { opacity: 0.8; }
+            100% { transform: translate(var(--vx), var(--vy)) scale(0.1); opacity: 0; }
+        }
     </style>
 </head>
 <body class="antialiased h-screen w-screen flex flex-col m-0 p-0 overflow-hidden bg-gray-50 text-gray-800">
@@ -189,6 +202,10 @@
             <button id="tabAlbumBtn" class="tab-btn px-4 py-2 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-800 transition-all flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 3. Ghép Layout
+            </button>
+            <button id="tabVideoBtn" class="tab-btn px-4 py-2 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-800 transition-all flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                4. Cắt Video FB
             </button>
         </div>
 
@@ -589,6 +606,58 @@
             </div>
         </div>
 
+        <!-- Video Workspace Fullscreen -->
+        <div id="videoWorkspace" class="hidden w-full h-full flex flex-row overflow-hidden bg-gray-900 text-white">
+            <div class="w-80 flex-shrink-0 bg-gray-800 border-r border-gray-700 p-5 flex flex-col gap-5 overflow-y-auto h-full shadow-2xl z-10 custom-scrollbar">
+                <div>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Tải Video Lên</h3>
+                    <button class="w-full py-4 border-2 border-dashed border-blue-500 bg-blue-900/30 hover:bg-blue-800/50 rounded-xl flex flex-col items-center justify-center gap-2 transition-colors cursor-pointer text-blue-400" onclick="document.getElementById('videoFileInput').click()">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <span class="text-sm font-bold">Chọn Video MP4/WebM</span>
+                    </button>
+                    <input type="file" id="videoFileInput" class="hidden" accept="video/mp4,video/webm,video/mov,video/quicktime">
+                </div>
+
+                <div class="h-px bg-gray-700 w-full"></div>
+
+                <div id="videoControls" class="opacity-50 pointer-events-none transition-opacity flex flex-col gap-4">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Định Dạng Cắt Facebook</h3>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <button class="vid-ratio-btn active border border-blue-500 bg-blue-600/20 text-blue-300 rounded p-2 text-xs font-bold transition-colors" data-ratio="1">Vuông 1:1<br><span class="font-normal text-[10px]">Post/Ads</span></button>
+                        <button class="vid-ratio-btn border border-gray-600 bg-gray-700 hover:bg-gray-600 rounded p-2 text-xs font-bold transition-colors" data-ratio="0.8">Dọc 4:5<br><span class="font-normal text-[10px]">Feed Đẹp Nhất</span></button>
+                        <button class="vid-ratio-btn border border-gray-600 bg-gray-700 hover:bg-gray-600 rounded p-2 text-xs font-bold transition-colors" data-ratio="0.5625">Dọc 9:16<br><span class="font-normal text-[10px]">Reels/Story</span></button>
+                        <button class="vid-ratio-btn border border-gray-600 bg-gray-700 hover:bg-gray-600 rounded p-2 text-xs font-bold transition-colors" data-ratio="1.777">Ngang 16:9<br><span class="font-normal text-[10px]">Video Chuẩn</span></button>
+                    </div>
+                    <p class="text-[10px] text-gray-400 italic mb-2">Mẹo: Kéo khung cắt trên màn hình, hoặc thu phóng để chọn vùng video muốn giữ lại.</p>
+
+                    <button id="startVidRecordBtn" class="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl font-bold shadow-lg transition-transform hover:-translate-y-0.5 flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Bắt Đầu Cắt & Xuất
+                    </button>
+
+                    <div id="vidProgressArea" class="hidden mt-2 bg-gray-800 p-3 rounded-lg border border-gray-700">
+                        <div class="flex justify-between text-[10px] text-gray-400 mb-1">
+                            <span>Đang xuất video...</span>
+                            <span id="vidProgressPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2 mb-2 overflow-hidden shadow-inner">
+                            <div id="vidProgressBar" class="bg-gradient-to-r from-green-400 to-green-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <p class="text-[9px] text-yellow-500 text-center italic">Đừng chuyển tab trong lúc render nhé!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Canvas Area -->
+            <div class="flex-1 relative flex items-center justify-center p-6 h-full overflow-hidden bg-black/50" style="background-image: radial-gradient(#374151 1px, transparent 1px); background-size: 20px 20px;">
+                <canvas id="videoCanvas" class="max-w-full max-h-full object-contain shadow-2xl bg-black touch-none cursor-crosshair"></canvas>
+                <div id="videoCanvasGuide" class="absolute pointer-events-none text-center opacity-50">
+                    <svg class="w-20 h-20 mx-auto mb-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <p class="font-bold text-xl text-gray-500 drop-shadow-md">Tải video lên<br>để bắt đầu cắt định dạng</p>
+                </div>
+            </div>
+        </div>
+
         <!-- THÊM MỚI: MODAL CẮT ẢNH -->
         <div id="cropModal" class="fixed inset-0 z-50 bg-black/90 hidden flex-col items-center justify-center p-4">
             <h2 class="text-white text-xl font-bold mb-4 drop-shadow-md">Cắt Ảnh Tối Ưu - Chuẩn Facebook</h2>
@@ -656,17 +725,61 @@
 
         <!-- THÊM MỚI: GIAO DIỆN FULLSCREEN TRÌNH CHIẾU -->
         <div id="presentationView" class="fixed inset-0 z-[200] bg-black hidden flex-col items-center justify-center overflow-hidden">
-            <!-- Vùng chứa các phần tử động (Bóng bay, Hào quang) -->
+            <!-- Vùng chứa các phần tử động (Bóng bay, Hào quang, Pháo sáng) -->
             <div id="animContainer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
             
-            <!-- Ảnh chính được trình chiếu -->
-            <div class="relative z-10 w-full h-full flex items-center justify-center p-8">
+            <!-- Ảnh chính được trình chiếu (giảm margin p-8 thành p-2 để bung sát mép) -->
+            <div class="relative z-10 w-full h-full flex items-center justify-center p-2 md:p-4">
                 <img id="presentationImage" class="max-w-full max-h-full object-contain drop-shadow-[0_0_30px_rgba(255,255,255,0.3)] transition-all duration-1000 transform scale-95" src="" alt="Trình chiếu">
             </div>
 
             <button id="exitPresentBtn" class="absolute top-6 right-6 z-50 p-3 bg-white/20 hover:bg-white/40 text-white rounded-full backdrop-blur transition-all" title="Thoát (Esc)">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
+
+            <!-- THÊM MỚI: MENU MINI MỞ TRANG WEB ĐA NHIỆM TRONG KHI TRÌNH CHIẾU -->
+            <div class="absolute bottom-6 left-6 z-[250] flex flex-col-reverse items-start gap-3">
+                <button id="toggleWebMenuBtn" class="p-3.5 bg-white/10 hover:bg-white/30 text-white rounded-full backdrop-blur-md transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] border border-white/20 hover:scale-110" title="Mở trang web phụ">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                </button>
+                
+                <div id="webMenuList" class="flex-col gap-2 origin-bottom transition-all duration-300 transform scale-95 opacity-0 pointer-events-none flex">
+                    <button class="open-web-btn px-5 py-3 bg-gradient-to-r from-blue-600/90 to-indigo-600/90 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-bold rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.3)] backdrop-blur flex items-center gap-2 transition-transform hover:scale-105 border border-white/20" data-target="iframeWin1">
+                        🚀 Học Mà Chơi
+                    </button>
+                    <button class="open-web-btn px-5 py-3 bg-gradient-to-r from-purple-600/90 to-pink-600/90 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-bold rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.3)] backdrop-blur flex items-center gap-2 transition-transform hover:scale-105 border border-white/20" data-target="iframeWin2">
+                        🎯 TC Tiến Lực
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cửa sổ đa nhiệm 1: Học Mà Chơi (Dùng kỹ thuật opacity để giữ nguyên dữ liệu) -->
+            <div id="iframeWin1" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[95vw] md:w-[90vw] h-[90vh] z-[260] bg-white rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden transition-all duration-300 opacity-0 pointer-events-none scale-95 border border-gray-700">
+                <div class="bg-gradient-to-r from-gray-900 to-gray-800 px-5 py-3 flex justify-between items-center shadow-md">
+                    <div class="flex items-center gap-3">
+                        <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-yellow-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+                        <span class="text-white font-bold text-sm tracking-wide">Học Mà Chơi - Sáng Tạo</span>
+                    </div>
+                    <button class="close-web-btn text-gray-300 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors bg-white/5" data-target="iframeWin1" title="Thu nhỏ">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                </div>
+                <iframe src="https://hoc-ma-choi-six.vercel.app/" class="w-full flex-1 border-0 bg-gray-50"></iframe>
+            </div>
+
+            <!-- Cửa sổ đa nhiệm 2: TC Tiến Lực -->
+            <div id="iframeWin2" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[95vw] md:w-[90vw] h-[90vh] z-[260] bg-white rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.7)] flex flex-col overflow-hidden transition-all duration-300 opacity-0 pointer-events-none scale-95 border border-gray-700">
+                <div class="bg-gradient-to-r from-gray-900 to-gray-800 px-5 py-3 flex justify-between items-center shadow-md">
+                    <div class="flex items-center gap-3">
+                        <div class="flex gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="w-3 h-3 rounded-full bg-yellow-500"></span><span class="w-3 h-3 rounded-full bg-green-500"></span></div>
+                        <span class="text-white font-bold text-sm tracking-wide">Website: TC Tiến Lực</span>
+                    </div>
+                    <button class="close-web-btn text-gray-300 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors bg-white/5" data-target="iframeWin2" title="Thu nhỏ">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                </div>
+                <iframe src="https://tctienluc.vercel.app/" class="w-full flex-1 border-0 bg-gray-50"></iframe>
+            </div>
         </div>
 
     </main>
@@ -684,10 +797,12 @@
             const tabOpt = document.getElementById('tabOptimizeBtn');
             const tabCol = document.getElementById('tabCollageBtn');
             const tabAlbum = document.getElementById('tabAlbumBtn');
+            const tabVideo = document.getElementById('tabVideoBtn');
             const initialView = document.getElementById('initialUploadView');
             const optWorkspace = document.getElementById('optimizerWorkspace');
             const colWorkspace = document.getElementById('collageWorkspace');
             const albumWorkspace = document.getElementById('albumWorkspace');
+            const videoWorkspace = document.getElementById('videoWorkspace');
             const headerActions = document.getElementById('headerActions');
             const globalResetBtn = document.getElementById('globalResetBtn');
             const globalDownloadBtn = document.getElementById('globalDownloadBtn');
@@ -838,6 +953,7 @@
             tabOpt.addEventListener('click', () => switchTab('optimize'));
             tabCol.addEventListener('click', () => switchTab('collage'));
             tabAlbum.addEventListener('click', () => switchTab('album'));
+            tabVideo.addEventListener('click', () => switchTab('video'));
 
             function switchTab(mode) {
                 activeMode = mode;
@@ -857,11 +973,17 @@
                 setTabStyle(tabOpt, mode === 'optimize');
                 setTabStyle(tabCol, mode === 'collage');
                 setTabStyle(tabAlbum, mode === 'album');
+                setTabStyle(tabVideo, mode === 'video');
                 
                 updateWorkspaceVisibility();
             }
 
             function updateWorkspaceVisibility() {
+                // Tạm dừng video nếu rời khỏi tab
+                if (activeMode !== 'video' && typeof sourceVideo !== 'undefined' && !sourceVideo.paused) {
+                    sourceVideo.pause();
+                }
+
                 // Special handling for Album mode (doesn't strictly require baseImage initially)
                 if (activeMode === 'album') {
                     initialView.classList.add('opacity-0', 'pointer-events-none');
@@ -869,6 +991,8 @@
                     optWorkspace.classList.remove('flex');
                     colWorkspace.classList.add('hidden');
                     colWorkspace.classList.remove('flex');
+                    videoWorkspace.classList.add('hidden');
+                    videoWorkspace.classList.remove('flex');
                     
                     albumWorkspace.classList.remove('hidden');
                     albumWorkspace.classList.add('flex');
@@ -880,9 +1004,31 @@
                     return;
                 }
 
-                // Hide album if leaving
+                // Special handling for Video mode
+                if (activeMode === 'video') {
+                    initialView.classList.add('opacity-0', 'pointer-events-none');
+                    optWorkspace.classList.add('hidden');
+                    optWorkspace.classList.remove('flex');
+                    colWorkspace.classList.add('hidden');
+                    colWorkspace.classList.remove('flex');
+                    albumWorkspace.classList.add('hidden');
+                    albumWorkspace.classList.remove('flex');
+                    
+                    videoWorkspace.classList.remove('hidden');
+                    videoWorkspace.classList.add('flex');
+                    
+                    headerActions.classList.remove('opacity-0', 'pointer-events-none');
+                    headerActions.classList.add('opacity-100', 'pointer-events-auto');
+                    
+                    if(typeof isVideoLoaded !== 'undefined' && isVideoLoaded) sourceVideo.play();
+                    return;
+                }
+
+                // Hide album & video if leaving
                 albumWorkspace.classList.add('hidden');
                 albumWorkspace.classList.remove('flex');
+                videoWorkspace.classList.add('hidden');
+                videoWorkspace.classList.remove('flex');
 
                 if (!baseImage) {
                     initialView.classList.remove('opacity-0', 'pointer-events-none');
@@ -1574,12 +1720,16 @@
                 }
                 isDragging = false;
                 isResizing = false;
+                cropAction = null; // Đảm bảo hủy trạng thái kéo cắt
             }
 
             // Mouse Events
             canvas.addEventListener('mousedown', handlePointerDown);
             window.addEventListener('mousemove', handlePointerMove);
-            window.addEventListener('mouseup', handlePointerUp);
+            window.addEventListener('mouseup', (e) => {
+                handlePointerUp();
+                cropAction = null; // Sửa lỗi dính khung cắt khi nhả chuột trên máy tính
+            });
             // Touch Events
             canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handlePointerDown(e); }, {passive: false});
             
@@ -2061,11 +2211,13 @@
 
             function applyCropRatio() {
                 if(!currentCropRatio || !cropCanvas.width) return;
-                let w = cropCanvas.width * 0.8;
+                
+                // Thuật toán: Tạo ô cắt to nhất có thể và "Cố định ở chính giữa"
+                let w = cropCanvas.width * 0.9;
                 let h = w / currentCropRatio;
                 
-                if (h > cropCanvas.height * 0.8) {
-                    h = cropCanvas.height * 0.8;
+                if (h > cropCanvas.height * 0.9) {
+                    h = cropCanvas.height * 0.9;
                     w = h * currentCropRatio;
                 }
                 
@@ -2126,7 +2278,9 @@
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
                 ctx.setLineDash([6, 6]); ctx.strokeRect(cropBox.x, cropBox.y, cropBox.w, cropBox.h); ctx.setLineDash([]);
                 
-                ctx.fillStyle = '#3b82f6'; const s = 14;
+                // Hiển thị 4 góc lớn hơn để dễ túm (Dựa trên tỷ lệ canvas)
+                ctx.fillStyle = '#3b82f6'; 
+                const s = Math.max(16, cropCanvas.width * 0.025); 
                 const drawHandle = (x, y) => ctx.fillRect(x - s/2, y - s/2, s, s);
                 drawHandle(cropBox.x, cropBox.y);
                 drawHandle(cropBox.x + cropBox.w, cropBox.y);
@@ -2134,12 +2288,24 @@
                 drawHandle(cropBox.x + cropBox.w, cropBox.y + cropBox.h);
             }
 
-            cropCanvas.addEventListener('mousedown', (e) => {
+            // HÀM QUAN TRỌNG: Quy đổi tọa độ chuột (màn hình) sang tọa độ thực tế của Canvas
+            function getCropCanvasCoords(e) {
                 const rect = cropCanvas.getBoundingClientRect();
-                const x = e.clientX - rect.left, y = e.clientY - rect.top;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * (cropCanvas.width / rect.width),
+                    y: (clientY - rect.top) * (cropCanvas.height / rect.height)
+                };
+            }
+
+            cropCanvas.addEventListener('mousedown', (e) => {
+                const coords = getCropCanvasCoords(e);
+                const x = coords.x, y = coords.y;
                 
                 cropStart = { x, y, bx: cropBox.x, by: cropBox.y, bw: cropBox.w, bh: cropBox.h };
-                const s = 15;
+                // Vùng nhận diện chạm rộng hơn (hitbox) để dễ kéo thả
+                const s = Math.max(25, cropCanvas.width * 0.05); 
                 const near = (px, py, rx, ry) => Math.hypot(px-rx, py-ry) < s;
                 
                 if (near(x, y, cropBox.x, cropBox.y)) cropAction = 'nw';
@@ -2153,9 +2319,10 @@
             // Handled by window.addEventListener('mousemove') which checks for cropAction
             window.addEventListener('mousemove', (e) => {
                 if (cropAction && !cropModal.classList.contains('hidden')) {
-                    const rect = cropCanvas.getBoundingClientRect();
-                    let x = Math.max(0, Math.min(cropCanvas.width, e.clientX - rect.left));
-                    let y = Math.max(0, Math.min(cropCanvas.height, e.clientY - rect.top));
+                    const coords = getCropCanvasCoords(e);
+                    // Đảm bảo con trỏ không vuột ra ngoài giới hạn canvas
+                    let x = Math.max(0, Math.min(cropCanvas.width, coords.x));
+                    let y = Math.max(0, Math.min(cropCanvas.height, coords.y));
                     
                     if (cropAction === 'move') {
                         cropBox.x = Math.max(0, Math.min(cropCanvas.width - cropBox.w, cropStart.bx + (x - cropStart.x)));
@@ -2173,18 +2340,23 @@
                             }
                             if (cropAction.includes('e')) cropBox.w = Math.max(30, x - cropBox.x);
                         } else {
-                            let newW = cropBox.w;
-                            if (cropAction.includes('e')) newW = x - cropStart.bx;
-                            if (cropAction.includes('w')) newW = (cropStart.bx + cropStart.bw) - x;
+                            // Logic khóa tỉ lệ Aspect Ratio vững chắc hơn
+                            let desiredW = cropBox.w;
+                            if (cropAction.includes('e')) desiredW = x - cropStart.bx;
+                            if (cropAction.includes('w')) desiredW = (cropStart.bx + cropStart.bw) - x;
                             
-                            if (cropAction === 'n' || cropAction === 's') {
-                                let newH = cropBox.h;
-                                if (cropAction === 's') newH = y - cropStart.by;
-                                if (cropAction === 'n') newH = (cropStart.by + cropStart.bh) - y;
-                                newW = newH * currentCropRatio;
-                            }
+                            let maxW = cropCanvas.width;
+                            if (cropAction.includes('e')) maxW = cropCanvas.width - cropStart.bx;
+                            if (cropAction.includes('w')) maxW = cropStart.bx + cropStart.bw;
                             
-                            newW = Math.max(30, newW);
+                            let maxH = cropCanvas.height;
+                            if (cropAction.includes('s')) maxH = cropCanvas.height - cropStart.by;
+                            if (cropAction.includes('n')) maxH = cropStart.by + cropStart.bh;
+                            
+                            let maxWFromH = maxH * currentCropRatio;
+                            let finalMaxW = Math.min(maxW, maxWFromH);
+                            
+                            let newW = Math.max(30, Math.min(desiredW, finalMaxW));
                             let newH = newW / currentCropRatio;
                             
                             if (cropAction.includes('w')) cropBox.x = (cropStart.bx + cropStart.bw) - newW;
@@ -2200,9 +2372,12 @@
             cropCanvas.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 if(e.touches.length > 0) {
-                    const rect = cropCanvas.getBoundingClientRect();
-                    e.clientX = e.touches[0].clientX; e.clientY = e.touches[0].clientY;
-                    cropCanvas.dispatchEvent(new MouseEvent('mousedown', e));
+                    // Mô phỏng event chuột để dùng chung logic mousedown
+                    const evt = new MouseEvent('mousedown', { 
+                        clientX: e.touches[0].clientX, 
+                        clientY: e.touches[0].clientY 
+                    });
+                    cropCanvas.dispatchEvent(evt);
                 }
             }, {passive: false});
 
@@ -2227,6 +2402,246 @@
                     updateWorkspaceVisibility();
                 };
                 img.src = c.toDataURL('image/png');
+            });
+
+            // --- 7.5. TÍNH NĂNG CẮT VIDEO FACEBOOK ---
+            const videoFileInput = document.getElementById('videoFileInput');
+            const videoCanvas = document.getElementById('videoCanvas');
+            const vCtx = videoCanvas.getContext('2d');
+            const videoControls = document.getElementById('videoControls');
+            const videoCanvasGuide = document.getElementById('videoCanvasGuide');
+            const vidRatioBtns = document.querySelectorAll('.vid-ratio-btn');
+            const startVidRecordBtn = document.getElementById('startVidRecordBtn');
+            const vidProgressArea = document.getElementById('vidProgressArea');
+            const vidProgressBar = document.getElementById('vidProgressBar');
+            const vidProgressPercent = document.getElementById('vidProgressPercent');
+
+            let sourceVideo = document.createElement('video');
+            sourceVideo.loop = true;
+            sourceVideo.muted = true;
+            sourceVideo.playsInline = true;
+            let isVideoLoaded = false;
+            let videoAnimId;
+            let vidCropBox = {x: 0, y: 0, w: 0, h: 0};
+            let currentVidRatio = 1; // Mặc định 1:1
+            let isExportingVideo = false;
+            let vDragStart = null, vCropAction = null;
+
+            videoFileInput.addEventListener('change', (e) => {
+                if(!e.target.files.length) return;
+                const file = e.target.files[0];
+                if (!file.type.match('video.*')) return alert('Vui lòng chọn tệp video hợp lệ.');
+                
+                const fileURL = URL.createObjectURL(file);
+                sourceVideo.src = fileURL;
+                sourceVideo.onloadedmetadata = () => {
+                    isVideoLoaded = true;
+                    videoControls.classList.remove('opacity-50', 'pointer-events-none');
+                    videoCanvasGuide.classList.add('hidden');
+                    
+                    // Setup Canvas size
+                    const maxW = document.getElementById('videoWorkspace').clientWidth * 0.7;
+                    const maxH = document.getElementById('videoWorkspace').clientHeight * 0.8;
+                    const ratio = sourceVideo.videoWidth / sourceVideo.videoHeight;
+                    
+                    let cw = maxW, ch = maxW / ratio;
+                    if (ch > maxH) { ch = maxH; cw = maxH * ratio; }
+                    
+                    videoCanvas.width = cw; videoCanvas.height = ch;
+                    
+                    // Init crop box
+                    applyVidCropRatio();
+                    
+                    sourceVideo.play();
+                    renderVideoLoop();
+                };
+            });
+
+            function applyVidCropRatio() {
+                if(!videoCanvas.width) return;
+                let w = videoCanvas.width * 0.9;
+                let h = w / currentVidRatio;
+                if (h > videoCanvas.height * 0.9) { h = videoCanvas.height * 0.9; w = h * currentVidRatio; }
+                
+                vidCropBox.w = w; vidCropBox.h = h;
+                vidCropBox.x = (videoCanvas.width - w) / 2; vidCropBox.y = (videoCanvas.height - h) / 2;
+            }
+
+            vidRatioBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const target = e.currentTarget;
+                    vidRatioBtns.forEach(b => {
+                        b.classList.remove('active', 'border-blue-500', 'bg-blue-600/20', 'text-blue-300');
+                        b.classList.add('border-gray-600', 'bg-gray-700', 'hover:bg-gray-600');
+                    });
+                    target.classList.remove('border-gray-600', 'bg-gray-700', 'hover:bg-gray-600');
+                    target.classList.add('active', 'border-blue-500', 'bg-blue-600/20', 'text-blue-300');
+                    
+                    currentVidRatio = parseFloat(target.dataset.ratio);
+                    applyVidCropRatio();
+                });
+            });
+
+            function renderVideoLoop() {
+                if (!isVideoLoaded || activeMode !== 'video' || isExportingVideo) return;
+                
+                vCtx.clearRect(0,0, videoCanvas.width, videoCanvas.height);
+                vCtx.drawImage(sourceVideo, 0, 0, videoCanvas.width, videoCanvas.height);
+                
+                // Draw crop overlay
+                vCtx.fillStyle = 'rgba(0,0,0,0.65)';
+                vCtx.fillRect(0, 0, videoCanvas.width, videoCanvas.height);
+                
+                vCtx.clearRect(vidCropBox.x, vidCropBox.y, vidCropBox.w, vidCropBox.h);
+                vCtx.drawImage(sourceVideo, 
+                    vidCropBox.x * (sourceVideo.videoWidth/videoCanvas.width), vidCropBox.y * (sourceVideo.videoHeight/videoCanvas.height), 
+                    vidCropBox.w * (sourceVideo.videoWidth/videoCanvas.width), vidCropBox.h * (sourceVideo.videoHeight/videoCanvas.height),
+                    vidCropBox.x, vidCropBox.y, vidCropBox.w, vidCropBox.h
+                );
+                
+                // Draw border
+                vCtx.strokeStyle = '#3b82f6'; vCtx.lineWidth = 2;
+                vCtx.setLineDash([8, 8]); vCtx.strokeRect(vidCropBox.x, vidCropBox.y, vidCropBox.w, vidCropBox.h); vCtx.setLineDash([]);
+                
+                // Draw handles
+                vCtx.fillStyle = '#fff'; const s = 16;
+                const drawHandle = (x, y) => { vCtx.fillRect(x - s/2, y - s/2, s, s); vCtx.strokeRect(x - s/2, y - s/2, s, s); };
+                drawHandle(vidCropBox.x, vidCropBox.y); drawHandle(vidCropBox.x + vidCropBox.w, vidCropBox.y);
+                drawHandle(vidCropBox.x, vidCropBox.y + vidCropBox.h); drawHandle(vidCropBox.x + vidCropBox.w, vidCropBox.y + vidCropBox.h);
+                
+                videoAnimId = requestAnimationFrame(renderVideoLoop);
+            }
+
+            // Video Crop Mouse Interaction
+            videoCanvas.addEventListener('mousedown', (e) => {
+                if(isExportingVideo) return;
+                const rect = videoCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left, y = e.clientY - rect.top;
+                
+                vDragStart = { x, y, bx: vidCropBox.x, by: vidCropBox.y, bw: vidCropBox.w, bh: vidCropBox.h };
+                const s = 20; const near = (px, py, rx, ry) => Math.hypot(px-rx, py-ry) < s;
+                
+                if (near(x, y, vidCropBox.x, vidCropBox.y)) vCropAction = 'nw';
+                else if (near(x, y, vidCropBox.x + vidCropBox.w, vidCropBox.y)) vCropAction = 'ne';
+                else if (near(x, y, vidCropBox.x, vidCropBox.y + vidCropBox.h)) vCropAction = 'sw';
+                else if (near(x, y, vidCropBox.x + vidCropBox.w, vidCropBox.y + vidCropBox.h)) vCropAction = 'se';
+                else if (x > vidCropBox.x && x < vidCropBox.x + vidCropBox.w && y > vidCropBox.y && y < vidCropBox.y + vidCropBox.h) vCropAction = 'move';
+                else vCropAction = null;
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (vCropAction && activeMode === 'video' && !isExportingVideo) {
+                    const rect = videoCanvas.getBoundingClientRect();
+                    let x = e.clientX - rect.left;
+                    let y = e.clientY - rect.top;
+                    
+                    if (vCropAction === 'move') {
+                        let nx = vDragStart.bx + (x - vDragStart.x);
+                        let ny = vDragStart.by + (y - vDragStart.y);
+                        vidCropBox.x = Math.max(0, Math.min(videoCanvas.width - vidCropBox.w, nx));
+                        vidCropBox.y = Math.max(0, Math.min(videoCanvas.height - vidCropBox.h, ny));
+                    } else {
+                        let nx = vidCropBox.x, ny = vidCropBox.y;
+                        let nw = vidCropBox.w, nh = vidCropBox.h;
+                        
+                        if (vCropAction.includes('e')) nw = x - nx;
+                        if (vCropAction.includes('w')) { nw = (vDragStart.bx + vDragStart.bw) - x; nx = x; }
+                        if (vCropAction.includes('s')) nh = y - ny;
+                        if (vCropAction.includes('n')) { nh = (vDragStart.by + vDragStart.bh) - y; ny = y; }
+                        
+                        if (Math.abs(nw - vDragStart.bw) > Math.abs(nh - vDragStart.bh)) {
+                            nh = nw / currentVidRatio;
+                            if(vCropAction.includes('n')) ny = vDragStart.by + vDragStart.bh - nh;
+                        } else {
+                            nw = nh * currentVidRatio;
+                            if(vCropAction.includes('w')) nx = vDragStart.bx + vDragStart.bw - nw;
+                        }
+                        
+                        if (nw < 60) { nw = 60; nh = nw/currentVidRatio; }
+                        if (nx < 0 || ny < 0 || nx+nw > videoCanvas.width || ny+nh > videoCanvas.height) return;
+                        
+                        vidCropBox.x = nx; vidCropBox.y = ny; vidCropBox.w = nw; vidCropBox.h = nh;
+                    }
+                }
+            });
+            window.addEventListener('mouseup', () => { vCropAction = null; });
+            videoCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); if(e.touches.length > 0 && !isExportingVideo) { e.clientX = e.touches[0].clientX; e.clientY = e.touches[0].clientY; videoCanvas.dispatchEvent(new MouseEvent('mousedown', e)); } }, {passive: false});
+
+            // Start Video Export
+            startVidRecordBtn.addEventListener('click', async () => {
+                if(!isVideoLoaded || isExportingVideo) return;
+                
+                isExportingVideo = true;
+                cancelAnimationFrame(videoAnimId);
+                startVidRecordBtn.classList.add('hidden');
+                vidProgressArea.classList.remove('hidden');
+                
+                const scaleX = sourceVideo.videoWidth / videoCanvas.width;
+                const scaleY = sourceVideo.videoHeight / videoCanvas.height;
+                const sx = vidCropBox.x * scaleX, sy = vidCropBox.y * scaleY;
+                const sw = vidCropBox.w * scaleX, sh = vidCropBox.h * scaleY;
+                
+                const outCanvas = document.createElement('canvas');
+                outCanvas.width = sw; outCanvas.height = sh;
+                const outCtx = outCanvas.getContext('2d');
+                
+                const stream = outCanvas.captureStream(30); // Capture at 30 FPS
+                const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+                const chunks = [];
+                
+                mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = 'video-studio-cropped.webm';
+                    a.click(); URL.revokeObjectURL(url);
+                    
+                    // Reset UI
+                    isExportingVideo = false;
+                    startVidRecordBtn.classList.remove('hidden');
+                    vidProgressArea.classList.add('hidden');
+                    sourceVideo.play();
+                    renderVideoLoop();
+                };
+                
+                sourceVideo.pause();
+                sourceVideo.currentTime = 0;
+                
+                // Wait for seek to complete
+                await new Promise(r => { sourceVideo.onseeked = r; });
+                
+                mediaRecorder.start();
+                sourceVideo.play();
+                
+                const duration = sourceVideo.duration;
+                
+                const exportLoop = () => {
+                    if(!isExportingVideo) return;
+                    outCtx.drawImage(sourceVideo, sx, sy, sw, sh, 0, 0, sw, sh);
+                    
+                    // Update Progress
+                    const pct = Math.min(100, Math.round((sourceVideo.currentTime / duration) * 100));
+                    vidProgressBar.style.width = `${pct}%`;
+                    vidProgressPercent.textContent = `${pct}%`;
+                    
+                    // Render preview to show user it's processing
+                    vCtx.clearRect(0,0, videoCanvas.width, videoCanvas.height);
+                    vCtx.drawImage(sourceVideo, 
+                        sx, sy, sw, sh,
+                        vidCropBox.x, vidCropBox.y, vidCropBox.w, vidCropBox.h
+                    );
+                    vCtx.strokeStyle = '#10b981'; vCtx.lineWidth = 4;
+                    vCtx.strokeRect(vidCropBox.x, vidCropBox.y, vidCropBox.w, vidCropBox.h);
+                    
+                    if (sourceVideo.currentTime >= duration || sourceVideo.ended) {
+                        mediaRecorder.stop();
+                        sourceVideo.pause();
+                    } else {
+                        requestAnimationFrame(exportLoop);
+                    }
+                };
+                exportLoop();
             });
 
             // --- 8. Global Actions ---
@@ -2410,29 +2825,34 @@
                     // Thêm hào quang và tia sáng chớp
                     presentationImage.classList.add('victory-glow', 'light-sweep');
                     
-                    // Tạo các vệt sáng phụ
+                    // Tạo hiệu ứng pháo sáng (Fireworks)
                     animInterval = setInterval(() => {
-                        const star = document.createElement('div');
-                        star.style.position = 'absolute';
-                        star.style.left = Math.random() * 100 + 'vw';
-                        star.style.top = Math.random() * 100 + 'vh';
-                        star.style.width = '4px';
-                        star.style.height = '4px';
-                        star.style.backgroundColor = '#fff';
-                        star.style.boxShadow = '0 0 20px 10px rgba(253, 224, 71, 0.8)';
-                        star.style.borderRadius = '50%';
-                        star.style.opacity = '0';
-                        star.style.transition = 'all 1s ease-in-out';
+                        const fwX = 10 + Math.random() * 80; // Trải dài từ 10vw đến 90vw
+                        const fwY = 10 + Math.random() * 50; // Nửa trên màn hình (10vh đến 60vh)
+                        const fwColors = ['#fde047', '#fbbf24', '#f59e0b', '#ef4444', '#ec4899', '#3b82f6', '#10b981', '#d946ef', '#06b6d4'];
+                        const color = fwColors[Math.floor(Math.random() * fwColors.length)];
                         
-                        animContainer.appendChild(star);
-                        
-                        setTimeout(() => {
-                            star.style.opacity = '1';
-                            star.style.transform = 'scale(5) rotate(45deg)';
-                        }, 50);
-                        
-                        setTimeout(() => { if (star.parentNode) star.remove(); }, 1000);
-                    }, 500);
+                        const numParticles = 40 + Math.random() * 30; // Tạo 40-70 hạt mỗi chùm
+                        for (let i = 0; i < numParticles; i++) {
+                            const p = document.createElement('div');
+                            p.className = 'firework-particle';
+                            p.style.left = fwX + 'vw';
+                            p.style.top = fwY + 'vh';
+                            p.style.backgroundColor = color;
+                            p.style.boxShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
+                            p.style.width = (3 + Math.random() * 4) + 'px';
+                            p.style.height = p.style.width;
+                            
+                            const angle = Math.random() * Math.PI * 2;
+                            const velocity = 80 + Math.random() * 250; 
+                            // Thêm +50 vào Y để tạo cảm giác trọng lực rơi xuống cuối
+                            p.style.setProperty('--vx', `${Math.cos(angle) * velocity}px`);
+                            p.style.setProperty('--vy', `${Math.sin(angle) * velocity + 50}px`); 
+                            
+                            animContainer.appendChild(p);
+                            setTimeout(() => { if (p.parentNode) p.remove(); }, 1200);
+                        }
+                    }, 800); // Bắn pháo mỗi 0.8s
                 }
             };
 
@@ -2453,6 +2873,46 @@
             // Xử lý khi người dùng ấn ESC để thoát Fullscreen
             document.addEventListener('fullscreenchange', () => {
                 if (!document.fullscreenElement) stopPresentation();
+            });
+
+            // --- THÊM MỚI: XỬ LÝ SỰ KIỆN MENU ĐA NHIỆM TRÌNH CHIẾU ---
+            const toggleWebMenuBtn = document.getElementById('toggleWebMenuBtn');
+            const webMenuList = document.getElementById('webMenuList');
+            
+            toggleWebMenuBtn.addEventListener('click', () => {
+                if (webMenuList.classList.contains('opacity-0')) {
+                    webMenuList.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+                    webMenuList.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+                } else {
+                    webMenuList.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+                    webMenuList.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+                }
+            });
+
+            // Mở cửa sổ Web (giữ nguyên dữ liệu)
+            document.querySelectorAll('.open-web-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetId = e.currentTarget.dataset.target;
+                    const win = document.getElementById(targetId);
+                    
+                    // Ẩn menu đi cho gọn màn hình
+                    webMenuList.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+                    webMenuList.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+                    
+                    // Hiển thị iframe bằng cách tháo pointer-events-none và opacity-0 (Không làm reload trang web)
+                    win.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+                    win.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+                });
+            });
+
+            // Thu nhỏ cửa sổ Web (chỉ ẩn đi, mọi dữ liệu input/trò chơi đang chơi vẫn được giữ 100%)
+            document.querySelectorAll('.close-web-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetId = e.currentTarget.dataset.target;
+                    const win = document.getElementById(targetId);
+                    win.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+                    win.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+                });
             });
 
 
